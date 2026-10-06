@@ -2,15 +2,18 @@
 
 ## Status
 
-**Proposed; implementation intentionally not started.** The team should review the
-agent plan below before asking an agent to implement it.
+**Proposed; feature implementation intentionally not started.** The repository already
+contains the basic Next.js scaffold, verification scripts, CI workflow, and typed
+Supabase client boundaries as development-environment preparation. The team should
+review the remaining implementation plan below before asking an agent to implement
+authentication, migrations, or protected routes.
 
 ## Scope
 
-Prepare the shared foundation needed by every feature:
+Complete the shared foundation needed by every feature:
 
-- Initialize the Next.js App Router TypeScript application for Vercel.
-- Add environment-safe Supabase browser/server client setup.
+- Complete the Next.js App Router TypeScript foundation for Vercel.
+- Complete environment-safe Supabase browser/server session setup.
 - Establish the first versioned database migration for the application profile/role
   boundary, while keeping credentials in Supabase Auth.
 - Add the sign-up, sign-in, sign-out, protected-route/session behavior required by the
@@ -43,18 +46,19 @@ provider, or password-policy details.
 
 ## Agent investigation and proposed plan
 
-The agent inspected the repository: it contained only the initial README and no
-application scaffold, dependency manifest, migrations, tests, or CI configuration. The
-iteration plan requires Next.js/TypeScript, Supabase/Postgres, testing, and Vercel
-checks.
+The agent initially inspected the repository and found only the initial README. The
+repository now contains the Next.js scaffold, dependency manifest, typed Supabase
+client boundaries, tests, and CI configuration. It still has no application migrations,
+authentication UI, session middleware, or protected route. The iteration plan requires
+Next.js/TypeScript, Supabase/Postgres, testing, and Vercel checks.
 
 Proposed sequence:
 
 1. Confirm the Supabase project URL/anon key workflow and whether the team wants the
    official Supabase CLI migrations in this repository.
-2. Create the Next.js App Router TypeScript scaffold and standard scripts.
-3. Add typed Supabase browser and server clients, session refresh/middleware, and
-   `.env.example` without credentials.
+2. Complete the Next.js App Router TypeScript scaffold and standard scripts.
+3. Extend the existing typed Supabase browser and server clients with session
+   refresh/middleware, using `.env.example` without credentials.
 4. Add the minimal profile/role migration and RLS policy; use Supabase Auth for
    credentials and do not add a password table.
 5. Build the smallest sign-up/sign-in/sign-out pages and one protected smoke-test route.
