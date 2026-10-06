@@ -1,6 +1,5 @@
-import type { Config } from "jest";
-
-const config: Config = {
+/** @type {import("jest").Config} */
+module.exports = {
   clearMocks: true,
   testEnvironment: "node",
   roots: ["<rootDir>/tests", "<rootDir>/src"],
@@ -19,5 +18,3 @@ const config: Config = {
     ],
   },
 };
-
-export default config;
