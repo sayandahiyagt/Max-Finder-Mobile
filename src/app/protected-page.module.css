@@ -1,0 +1,220 @@
+.page {
+  min-height: 100dvh;
+  padding-bottom: 88px;
+  background: #f7f8fa;
+  color: #172033;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+.brand {
+  color: #173f5f;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.profileLink {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid #d7dee8;
+  border-radius: 50%;
+  color: #173f5f;
+  background: #fff;
+}
+
+.profileLink svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.content {
+  width: min(100% - 48px, 520px);
+  margin: 0 auto;
+  padding: 72px 0 48px;
+}
+
+.content h1 {
+  margin-bottom: 8px;
+  font-size: clamp(2rem, 8vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  color: #e07a5f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.email {
+  margin-bottom: 36px;
+  color: #657083;
+}
+
+.petsHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 48px;
+  margin-bottom: 16px;
+}
+
+.petsHeading h2 {
+  font-size: 1.35rem;
+}
+
+.petsHeading span {
+  color: #657083;
+}
+
+.petGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.petCard,
+.addPetCard {
+  display: flex;
+  min-width: 0;
+  min-height: 180px;
+  padding: 12px;
+  border: 1px solid #e2e7ee;
+  border-radius: 14px;
+  background: #fff;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.petCard img,
+.petImagePlaceholder {
+  width: 100%;
+  height: 105px;
+  margin-bottom: 4px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
+.petImagePlaceholder {
+  display: grid;
+  place-items: center;
+  color: #8290a3;
+  background: #eef2f5;
+  font-size: 0.8rem;
+}
+
+.petCard strong,
+.addPetCard strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.petCard span {
+  overflow: hidden;
+  color: #657083;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addPetCard {
+  align-items: center;
+  justify-content: center;
+  color: #1f7a8c;
+  text-align: center;
+}
+
+.addPetCard > span {
+  font-size: 3rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.petDetailImage {
+  width: 100%;
+  max-height: 320px;
+  margin: 24px 0;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.petDetails {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 14px 12px;
+}
+
+.petDetails dt {
+  color: #657083;
+  font-weight: 650;
+}
+
+.petDetails dd {
+  text-transform: capitalize;
+}
+
+.editPetButton {
+  display: block;
+  margin-top: 28px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  color: #fff;
+  background: #173f5f;
+  font-weight: 700;
+  text-align: center;
+}
+
+.deletePetButton {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 1px solid #c62828;
+  border-radius: 10px;
+  color: #c62828;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.reportLostButton {
+  width: 100%;
+  margin-top: 32px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  background: #c62828;
+  cursor: not-allowed;
+  font: inherit;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 16px 20px;
+  }
+
+  .content {
+    width: min(100% - 40px, 520px);
+    padding-top: 48px;
+  }
+}

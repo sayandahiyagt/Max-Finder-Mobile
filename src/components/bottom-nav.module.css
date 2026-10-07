@@ -1,0 +1,41 @@
+.nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  gap: clamp(36px, 16vw, 96px);
+  min-height: 72px;
+  padding: 10px 24px max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid #e2e7ee;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -6px 24px rgba(23, 32, 51, 0.06);
+}
+
+.link {
+  display: flex;
+  min-width: 72px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #8290a3;
+  flex-direction: column;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.active {
+  color: #1f7a8c;
+}
