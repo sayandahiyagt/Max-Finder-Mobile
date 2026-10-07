@@ -29,5 +29,9 @@
     "jest-environment-jsdom": "^30.5.2",
     "ts-jest": "^29.4.14",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "unrs-resolver@1.12.2": true
   }
 }
