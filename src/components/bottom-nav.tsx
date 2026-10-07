@@ -14,6 +14,22 @@ export function BottomNav() {
         </svg>
         <span>Home</span>
       </Link>
+      <Link className={styles.link} href="/lost-pets/search">
+        <span className={styles.navSymbol} aria-hidden="true">⌕</span>
+        <span>Search</span>
+      </Link>
+      <Link className={styles.link} href="/lost-pets/reports">
+        <span className={styles.navSymbol} aria-hidden="true">▤</span>
+        <span>Your reports</span>
+      </Link>
+      <Link className={styles.link} href="/lost-pets/new">
+        <span className={styles.navSymbol} aria-hidden="true">＋</span>
+        <span>Report</span>
+      </Link>
+      <Link className={styles.link} href="/faq">
+        <span className={styles.navSymbol} aria-hidden="true">?</span>
+        <span>Help</span>
+      </Link>
     </nav>
   );
 }

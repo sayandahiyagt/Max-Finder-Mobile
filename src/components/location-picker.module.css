@@ -1,0 +1,37 @@
+.helpText {
+  color: #657083;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.map {
+  height: 280px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+}
+
+.reportMap {
+  height: 170px;
+  margin: 14px 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.reportMap :global(.leaflet-container) {
+  width: 100%;
+  height: 100%;
+}
+
+.map :global(.leaflet-container) {
+  width: 100%;
+  height: 100%;
+}
+
+.mapLoading {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: #657083;
+  background: #eef2f5;
+}

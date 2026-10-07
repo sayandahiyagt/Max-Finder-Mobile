@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/app-header";
@@ -20,6 +21,11 @@ export default async function HomePage() {
       <AppHeader />
       <section className={styles.content}>
         <h1>Home</h1>
+        <div className={styles.homeActions}>
+          <Link className={styles.homeAction} href="/lost-pets/search">Search lost pets</Link>
+          <Link className={styles.homeAction} href="/lost-pets/new">Report lost pet</Link>
+          <Link className={styles.homeAction} href="/lost-pets/reports">View your reports</Link>
+        </div>
       </section>
       <BottomNav />
     </main>

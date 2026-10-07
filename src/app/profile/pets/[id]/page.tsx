@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 
 import { BottomNav } from "@/components/bottom-nav";
 import { AppHeader } from "@/components/app-header";
@@ -33,6 +34,13 @@ export default async function PetPage({
   const { data: image } = await supabase.storage
     .from("pet-images")
     .createSignedUrl(pet.image_path, 3600);
+  const { data: activeReport } = await supabase
+    .from("lost_pet_reports")
+    .select("id")
+    .eq("pet_id", id)
+    .eq("owner_id", authData.user.id)
+    .eq("status", "LOST")
+    .maybeSingle();
 
   return (
     <main className={styles.page}>
@@ -52,9 +60,15 @@ export default async function PetPage({
           <dt>Size</dt><dd>{pet.size}</dd>
           <dt>Age</dt><dd>{pet.age} {pet.age === 1 ? "year" : "years"}</dd>
         </dl>
-        <button className={styles.reportLostButton} type="button">
-          Report lost
-        </button>
+        {activeReport ? (
+          <Link className={styles.viewReportButton} href={`/lost-pets/reports/${activeReport.id}`}>
+            View lost report
+          </Link>
+        ) : (
+          <Link className={styles.reportLostButton} href={`/lost-pets/new?petId=${id}`}>
+            Report lost
+          </Link>
+        )}
         <a className={styles.editPetButton} href={`/profile/pets/${id}/edit`}>Edit pet profile</a>
       </section>
       <BottomNav />

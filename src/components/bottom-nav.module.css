@@ -3,10 +3,10 @@
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 10;
+  z-index: 1000;
   display: flex;
   justify-content: center;
-  gap: clamp(36px, 16vw, 96px);
+  gap: clamp(10px, 5vw, 48px);
   min-height: 72px;
   padding: 10px 24px max(10px, env(safe-area-inset-bottom));
   border-top: 1px solid #e2e7ee;
@@ -16,7 +16,7 @@
 
 .link {
   display: flex;
-  min-width: 72px;
+  min-width: 64px;
   align-items: center;
   justify-content: center;
   gap: 4px;
@@ -34,6 +34,13 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+}
+
+.navSymbol {
+  display: block;
+  height: 24px;
+  font-size: 1.6rem;
+  line-height: 21px;
 }
 
 .active {
