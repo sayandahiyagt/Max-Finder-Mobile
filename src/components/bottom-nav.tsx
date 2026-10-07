@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { UnreadMessagesBadge } from "./unread-messages-badge";
 import styles from "./bottom-nav.module.css";
 
 export function BottomNav() {
@@ -29,6 +30,13 @@ export function BottomNav() {
       <Link className={styles.link} href="/faq">
         <span className={styles.navSymbol} aria-hidden="true">?</span>
         <span>Help</span>
+      </Link>
+      <Link className={styles.link} href="/messages">
+        <span className={styles.navIconWithBadge}>
+          <span className={styles.navSymbol} aria-hidden="true">✉</span>
+          <UnreadMessagesBadge />
+        </span>
+        <span>DMs</span>
       </Link>
     </nav>
   );

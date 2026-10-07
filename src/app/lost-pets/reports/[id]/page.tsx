@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { deleteLostPetReport, markLostPetFound } from "@/app/lost-pets/actions";
+import { startConversation } from "@/app/messages/actions";
 import { AppHeader } from "@/components/app-header";
 import { BackButton } from "@/components/back-button";
 import { BottomNav } from "@/components/bottom-nav";
@@ -72,9 +73,12 @@ export default async function LostPetReportPage({
           </form>
         )}
         {report.owner_id !== authData.user?.id && report.status === "LOST" && (
-          <button className={styles.contactOwnerButton} type="button">
-            Contact owner
-          </button>
+          <form action={startConversation}>
+            <input type="hidden" name="reportId" value={id} />
+            <button className={styles.contactOwnerButton} type="submit">
+              Contact owner
+            </button>
+          </form>
         )}
       </section>
       <BottomNav />

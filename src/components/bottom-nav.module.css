@@ -43,6 +43,28 @@
   line-height: 21px;
 }
 
+.navIconWithBadge {
+  position: relative;
+  display: block;
+  height: 24px;
+}
+
+.unreadBadge {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: #fff;
+  background: #c62828;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
 .active {
   color: #1f7a8c;
 }

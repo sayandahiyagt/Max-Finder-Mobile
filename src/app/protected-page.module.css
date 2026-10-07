@@ -408,9 +408,105 @@
   border-radius: 10px;
   color: #fff;
   background: #18794e;
-  cursor: not-allowed;
+  cursor: pointer;
   font: inherit;
   font-weight: 700;
+}
+
+.conversationList {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.conversationCard {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #e2e7ee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.conversationCard strong {
+  color: #172033;
+}
+
+.conversationCard span,
+.conversationCard small {
+  overflow: hidden;
+  color: #657083;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat {
+  margin-top: 24px;
+}
+
+.messageList {
+  display: grid;
+  gap: 10px;
+  min-height: 240px;
+  max-height: 55dvh;
+  padding: 14px;
+  overflow-y: auto;
+  border: 1px solid #e2e7ee;
+  border-radius: 14px;
+  background: #eef2f5;
+}
+
+.messageBubble {
+  justify-self: start;
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 12px 12px 12px 3px;
+  background: #fff;
+}
+
+.messageBubble p {
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.messageBubble small {
+  display: block;
+  margin-top: 5px;
+  color: #8290a3;
+  font-size: 0.7rem;
+}
+
+.messageMine {
+  justify-self: end;
+  border-radius: 12px 12px 3px 12px;
+  color: #fff;
+  background: #173f5f;
+}
+
+.messageMine small {
+  color: #d7dee8;
+}
+
+.messageForm {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.messageForm textarea {
+  min-height: 90px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  resize: vertical;
+  font: inherit;
+}
+
+.formError {
+  color: #c62828;
+  font-size: 0.85rem;
 }
 
 .reportLostButton {
