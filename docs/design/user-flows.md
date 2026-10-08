@@ -1,43 +1,88 @@
-# Max Finder Mobile user flows
+# User-flow specification
 
-## Account
+These flows describe functional behavior, not final visual styling.
 
-1. A visitor opens sign up or sign in.
-2. Sign up validates email and the approved password policy.
-3. Successful sign up signs the user in and preserves the session between pages.
-4. Sign out ends the session and returns the user to sign in.
-5. Protected features redirect or show an authentication prompt when unauthenticated.
+## 1. Account and session
 
-## Register and report a pet
+1. A visitor opens the Web application.
+2. The user registers or signs in through the application backend.
+3. Supabase Auth validates credentials and establishes the authenticated identity.
+4. Max Finder associates that identity with the application `users` profile.
+5. Authenticated state is available across protected navigation.
+6. Signing out ends the session.
+7. A protected feature requested without authentication returns the user to the authentication flow or presents an equivalent access prompt.
 
-1. An authenticated owner adds a pet with identifying information and an optional photo.
-2. The owner can edit or delete the registration after confirmation.
-3. The owner marks a registered pet lost and confirms last-seen time/location and an
-   approved contact method.
-4. The report is visibly active and searchable.
-5. The owner marks the pet found; the report leaves active public results.
+## 2. Register a pet
 
-## Find and contact
+1. An authenticated owner creates a Pet Profile.
+2. The owner enters the approved identifying fields.
+3. The owner may add the current Pet Profile image.
+4. The backend verifies identity and writes the profile through Pet Management and the repository layer.
+5. Only the owner may edit or delete the private Pet Profile.
+6. A pet cannot be physically deleted while a Lost Pet Report row still references it.
 
-1. A user browses active lost reports and applies filters.
-2. The matching view ranks likely matches and explains relevant factors.
-3. A user opens a report, reviews the available identifying details/contact method, and
-   starts a conversation.
-4. Both participants see timestamped messages and unread state.
-5. Participants can report or block unwanted conversation activity.
+## 3. Report a pet lost
 
-## Help and shelters
+1. The owner selects an existing registered pet.
+2. The owner creates a Lost Pet Report.
+3. The report records the pet's last-seen time and location, description, and report-level contact choice.
+4. The report begins in `LOST` status.
+5. Search can now include the approved report fields for authenticated users.
+6. The report reuses the Pet Profile image.
 
-1. Any visitor opens Help/FAQ, expands questions, and searches FAQ text.
-2. A user grants location permission or enters a location manually.
-3. The app lists approved shelters by proximity with contact details.
-4. Permission denial, unavailable data, and no matches produce clear alternatives/empty
-   states.
+There is no separate "found report" object.
 
-## Administration
+## 4. Search and review likely matches
 
-1. An authorized admin opens the moderation interface.
-2. The admin removes a user or post/report after reviewing the action.
-3. The removed account/report disappears from all public views and dependent data follows
-   the approved retention policy.
-4. Non-admin callers receive an authorization failure and see no moderation data.
+1. An authenticated user opens search.
+2. The user applies available filters.
+3. If location-based search is used, the user can grant device location permission or enter a location manually.
+4. Search retrieves only approved reports with `status = LOST`.
+5. Candidate reports may be ranked by the Deterministic Matching Engine.
+6. The UI shows the candidate report information and the factors that contributed to ranking.
+7. A no-result state is clear and does not expose private account data.
+
+## 5. Contact the owner
+
+A report supports its approved report-level contact method.
+
+If the user uses in-app communication:
+
+1. the backend creates or retrieves a Conversation tied to that Lost Pet Report and the two participants;
+2. only those participants can open its history;
+3. either participant may send a message;
+4. messages remain private even though the report itself is searchable.
+
+Version 1 does not add blocking/reporting/moderation flows unless a later approved specification restores them.
+
+## 6. Mark a pet found
+
+1. The authenticated owner opens the Lost Pet Report.
+2. The backend verifies ownership through the associated Pet Profile.
+3. The report status changes from `LOST` to `FOUND`.
+4. It no longer appears in LOST search results.
+5. The report remains the same persisted report object.
+
+## 7. Help / FAQ
+
+1. The user opens Help / FAQ.
+2. The application displays static guidance and frequently asked questions.
+3. No dedicated FAQ database or content-management subsystem is required in Version 1.
+
+## 8. Third-party organization lookup
+
+1. The user opens the organization directory.
+2. The app reads stored shelter, rescue, and animal-hospital records.
+3. For nearby ordering/filtering, the user may grant current-location permission or enter a location manually.
+4. The UI displays approved directory contact information.
+5. Failure to obtain device location does not block manual lookup.
+
+The Version 1 flow does not depend on a live shelter-data provider.
+
+## 9. Administration
+
+1. An authenticated Web user enters the administrative area.
+2. Identity & Account Management verifies `ADMIN`.
+3. The admin may initiate an account-deletion workflow, mark a Lost Pet Report `REMOVED`, or request the controlled Lost Pet Report CSV export.
+4. Report state changes still go through Lost Pet Report Management.
+5. Non-admin callers receive no privileged data or capability.

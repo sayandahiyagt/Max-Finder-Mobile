@@ -1,61 +1,94 @@
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ
-from older Next.js versions. Read the relevant guide in
-`node_modules/next/dist/docs/` before writing code and heed deprecation notices.
-
-<!-- END:nextjs-agent-rules -->
-
 # Max Finder Mobile agent instructions
 
-## Source of truth
+## Read specifications before coding
 
-Read the documents in `docs/` before making non-trivial changes:
+The authoritative repository specifications are under `docs/`.
 
-- `docs/architecture.md` — application boundaries and deployment model
-- `docs/data-model.md` — domain entities and privacy rules
-- `docs/api.md` — required interfaces and response behavior
-- `docs/security.md` — authentication, authorization, privacy, and moderation constraints
-- `docs/design/user-flows.md` — user-visible workflows
-- `docs/first-implementation-task.md` — current first task and proposed plan
+Read the files relevant to the task before changing code:
 
-The approved iteration plan is the basis for these documents. If a requirement conflicts
-with an approved design or client decision, stop and ask the team rather than silently
-choosing an implementation.
+- `docs/architecture.md` for application boundaries and dependency rules
+- `docs/data-model.md` for relational entities, fields, relationships, and integrity constraints
+- `docs/interfaces.md` for behavior at the shared application interface
+- `docs/security.md` for authentication, authorization, privacy, and sensitive-data rules
+- `docs/design/user-flows.md` for expected user behavior
+- `docs/design/ui-spec.md` for screen-level constraints
+- `docs/development-environment.md` for setup and verification
+- `docs/decisions-and-open-questions.md` for decisions that must not be silently reinterpreted
+- `docs/first-implementation-task.md` when working on the first approved implementation task
 
-## Development constraints
+Do not copy these specifications into this file. This file describes how to work within them.
 
-- The product is Max Finder Mobile, a Next.js application deployed to Vercel.
-- Use TypeScript and the App Router. Keep server-only code, service-role credentials,
-  and database access on the server.
-- Use the shared Supabase project for development. Never commit `.env.local`, service
-  role keys, passwords, or real user data. Use `.env.example` for variable names only.
-- Supabase Auth is the identity authority. Do not create a second password store.
-- Enforce ownership and admin authorization on the server/database boundary; UI checks
-  are not security controls.
-- Public views must contain only active lost-pet reports and approved contact data.
-- Treat location and direct messages as sensitive data. Collect and expose only what
-  the relevant workflow requires.
-- Do not add product features or change matching, retention, contact, or moderation
-  behavior without updating the authoritative specification and getting team approval.
+## Architectural constraints
 
-## Task workflow
+Max Finder Mobile is a layered modular monolith.
 
-1. Read the relevant specification and inspect existing code, migrations, and tests.
-2. State assumptions and surface ambiguity before coding. Ask one focused question when
-   an unresolved decision affects data, security, or user-visible behavior.
-3. Make the smallest complete change, following existing patterns.
-4. Add or update automated tests for behavior and authorization boundaries.
-5. Run the narrowest applicable checks, then `npm run lint`, `npm run typecheck`,
-   `npm test`, and `npm run build` when the change crosses those surfaces.
-6. Report changed files, verification commands, failures, and any remaining decision.
+The current client is a Next.js, React, and TypeScript web application. A React Native and Expo mobile client is planned later. Both clients must use the shared Application API / Server Interface. Do not make presentation code the owner of business rules, authorization, or persistence.
 
-## Git and review
+The approved persistence boundary is Prisma-backed and stores application-owned data in Supabase PostgreSQL. Supabase Auth is the identity and credential authority. Supabase Storage holds Pet Profile media. Platform geolocation is optional and permission-controlled.
 
-- Work in a feature branch and use pull requests; do not push directly to `main`.
-- Do not commit secrets or generated build output.
-- Keep schema changes versioned and reviewable.
-- Do not implement the plan in `docs/first-implementation-task.md` until the team has
-  reviewed and approved that plan.
+Do not create direct client-to-database access. Do not create a second password store. Do not use client-side checks as the only authorization control.
+
+## Data and product constraints
+
+Keep these decisions intact unless the team changes the specification first:
+
+- `Lost Pet Report` is the only report object. `LOST`, `FOUND`, and `REMOVED` are lifecycle states.
+- Search and filtering of Lost Pet Reports require authentication.
+- Lost Pet Reports reuse the associated Pet Profile image. Do not add a `report_images` table.
+- Do not add `is_active` to Lost Pet Reports. Status is the authoritative activity state.
+- Do not add `last_message_at` to conversations. Derive it from messages.
+- Third-party shelters, rescues, and animal hospitals are application-owned directory records in PostgreSQL for Version 1.
+- Current device/search location is temporary input and is different from the persisted last-known pet location.
+- Application/domain authorization is primary. RLS is defense in depth.
+- Administration is web-only in the current scope.
+- Version 1 does not include user blocking, user-reporting, abuse-review workflows, or message-limit promises unless a later approved specification adds them.
+- AI-assisted matching is not part of the required MVP.
+
+## How to approach a nontrivial task
+
+1. Read the relevant specifications.
+2. Inspect the existing repository before proposing changes.
+3. State any conflict between the repository and the specification.
+4. Propose the smallest complete implementation that satisfies the documented behavior.
+5. Identify security, migration, and test implications before coding.
+6. If an unresolved decision affects user-visible behavior, data shape, security, or privacy, stop and ask the team.
+7. After implementation is explicitly approved, add or update tests and run the repository verification commands.
+
+Do not silently resolve a documented open question by inventing product behavior.
+
+## Verification
+
+For code changes, use the narrowest useful test first, then run the full repository gates when the change is ready:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Database work must also validate the Prisma schema and prove migrations are reproducible before it is considered complete.
+
+Security-sensitive work needs negative tests, not only happy-path tests. At minimum, test unauthenticated access, wrong-user access where ownership matters, and non-admin access to administrative behavior.
+
+## First-task stop rule
+
+For `docs/first-implementation-task.md`, the readiness assignment requires investigation and a proposed plan before implementation.
+
+Unless the team explicitly says the plan has been reviewed and approved, do this:
+
+1. inspect the repository;
+2. compare it with the task and specifications;
+3. propose the implementation plan;
+4. report assumptions and risks;
+5. stop.
+
+Do not implement the first task during the planning-only handoff step.
+
+## Git and secrets
+
+Use a feature branch and pull request. Do not push implementation directly to `main`.
+
+Never commit `.env.local`, database credentials, the Supabase service-role key, passwords, real user data, or generated build output. `.env.example` should contain variable names only.
+
+Next.js in this repository is version 16. When framework behavior is uncertain, check the installed Next.js documentation and current project patterns rather than relying on older conventions.

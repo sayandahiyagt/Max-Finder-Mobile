@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+#temporary
+/tmp/
+
 # next.js
 /.next/
 /out/
