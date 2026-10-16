@@ -55,15 +55,28 @@ export function LocationPickerFields({
   longitudeName?: string;
 }) {
   const [position, setPosition] = useState(fallbackPosition);
-  const [label, setLabel] = useState("Current location");
+  const [label, setLabel] = useState("Finding address…");
+
+  const updateAddress = async (nextPosition: [number, number]) => {
+    setLabel("Finding address…");
+    try {
+      const response = await fetch(`/api/geocode?lat=${nextPosition[0]}&lon=${nextPosition[1]}`);
+      if (!response.ok) throw new Error("Address lookup failed");
+      const result = (await response.json()) as { label?: string };
+      setLabel(result.label ?? "Address unavailable");
+    } catch {
+      setLabel("Address unavailable");
+    }
+  };
 
   useEffect(() => {
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        setPosition([coords.latitude, coords.longitude]);
-        setLabel("Your current location");
+        const nextPosition: [number, number] = [coords.latitude, coords.longitude];
+        setPosition(nextPosition);
+        void updateAddress(nextPosition);
       },
       () => undefined,
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 },
@@ -72,7 +85,7 @@ export function LocationPickerFields({
 
   const updatePosition = (nextPosition: [number, number]) => {
     setPosition(nextPosition);
-    setLabel("Selected map location");
+    void updateAddress(nextPosition);
   };
 
   return (
@@ -113,13 +126,13 @@ export function LocationPickerFields({
       </div>
       <div className="location-picker-values">
         <label>
-          Approximate area or landmark
+          Location address
           <input
             name={locationName}
-            defaultValue="Current location"
+            value={label}
             maxLength={255}
             required
-            onChange={(event) => setLabel(event.target.value || "Selected map location")}
+            readOnly
           />
         </label>
         <input name={latitudeName} type="hidden" value={position[0]} readOnly />

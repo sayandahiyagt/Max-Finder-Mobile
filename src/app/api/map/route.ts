@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     spottings: await Promise.all(spottingsResult.data.map(async (spotting) => ({
       id: spotting.id,
       type: "spotted" as const,
-      name: `Spotted ${spotting.species}`,
+      name: "",
       species: spotting.species,
       breed: spotting.breed,
       locationLabel: await addressFor(spotting.location_label, Number(spotting.latitude), Number(spotting.longitude)),

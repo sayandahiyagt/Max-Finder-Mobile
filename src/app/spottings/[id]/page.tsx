@@ -15,7 +15,9 @@ export default async function SpottingDetailPage({ params, searchParams }: { par
   const locationLabel =
     storedLocation &&
     !/^(?:your )?current location$/i.test(storedLocation) &&
-    !/^selected map location$/i.test(storedLocation)
+    !/^selected map location$/i.test(storedLocation) &&
+    !/^finding address…?$/i.test(storedLocation) &&
+    !/^address unavailable$/i.test(storedLocation)
       ? storedLocation
       : await reverseGeocode(Number(spotting.latitude), Number(spotting.longitude));
   const imageUrl = spotting.image_path

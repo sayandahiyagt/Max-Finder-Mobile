@@ -29,7 +29,7 @@ export default function FAQPage() {
       <p className="eyebrow">Atlanta-area resources</p>
       <h2 style={{ marginTop: 8 }}>Local shelter contacts</h2>
       <p style={{ marginTop: 8 }}>Call ahead to confirm hours and intake policies. For stray animals, contact the county shelter serving the animal&apos;s location.</p>
-      <div className="table-list" style={{ marginTop: 16 }}>{atlantaShelters.map(([name, phone, address, website]) => <div className="list-row" key={name}><div><h3>{name}</h3><p>{address}</p><p><a href={`tel:${phone.replaceAll("-", "")}`}>{phone}</a></p></div><a href={website} target="_blank" rel="noreferrer">Website →</a></div>)}</div>
+      <div className="table-list" style={{ marginTop: 16 }}>{atlantaShelters.map(([name, phone, address, website]) => <div className="list-row" key={name}><div><h3>{name}</h3><p>{address}</p><p><a href={`tel:${phone.replaceAll("-", "")}`}>{phone}</a></p></div><a className="website-button" href={website} target="_blank" rel="noreferrer">Visit website <span aria-hidden="true">↗</span></a></div>)}</div>
     </section>
   </main></AppShell>;
 }

@@ -39,9 +39,9 @@ export type MapReport = {
 
 const searchIcon = L.divIcon({
   className: "search-location-marker",
-  html: "<span></span>",
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  html: "",
+  iconSize: [10, 10],
+  iconAnchor: [5, 5],
 });
 
 function ResizeMap() {
@@ -109,6 +109,15 @@ function BoundsWatcher({ onChange }: { onChange: (bounds: string) => void }) {
   return null;
 }
 
+function MapLocationSelector({ onLocationChange }: { onLocationChange?: (position: [number, number]) => void }) {
+  useMapEvents({
+    click(event) {
+      onLocationChange?.([event.latlng.lat, event.latlng.lng]);
+    },
+  });
+  return null;
+}
+
 export default function MapExplorer({
   locationRequest = 0,
   onCountsChange,
@@ -169,6 +178,7 @@ export default function MapExplorer({
       <CenterOnUser request={locationRequest} onLocationChange={onLocationChange} />
       <CenterOnSearch position={searchLocation} />
       <BoundsWatcher onChange={setBounds} />
+      <MapLocationSelector onLocationChange={onLocationChange} />
       {searchLocation && (
         <Marker
           position={searchLocation}
@@ -220,7 +230,6 @@ export default function MapExplorer({
                 {report.type === "lost" ? "Lost pet" : "Spotting"}
               </span>
               {report.name && <strong>{report.name}</strong>}
-              {report.type === "lost" && report.species && <span>{report.species}</span>}
               <span>{report.locationLabel ?? "Address unavailable"}</span>
               <small>{report.time}</small>
               <Link

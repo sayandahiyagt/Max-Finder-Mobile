@@ -34,7 +34,7 @@ export async function createLostPet(formData: FormData) {
       !lastSeenAt || Number.isNaN(new Date(lastSeenAt).getTime())) {
     throw new Error("Please complete every report field.");
   }
-  if (/^(?:your )?current location$|^selected map location$/i.test(locationLabel)) {
+  if (/^(?:your )?current location$|^selected map location$|^finding address…?$|^address unavailable$/i.test(locationLabel)) {
     const geocodedLocation = await reverseGeocode(latitude, longitude);
     if (!geocodedLocation) {
       throw new Error("Could not determine an address for this report location.");
@@ -54,45 +54,65 @@ export async function createLostPet(formData: FormData) {
     "lost-pet-images",
     user.id,
   );
-  const petId = randomUUID();
-  const legacySize =
-    weightRange === "Under 10 lbs"
-      ? "small"
-      : weightRange === "Over 75 lbs"
-        ? "large"
-        : "medium";
-  const { error: petError } = await admin.from("pets").insert({
-    id: petId,
-    owner_id: user.id,
-    name: petName,
-    species: species.toLowerCase(),
-    breed,
-    color: "Unknown",
-    size: legacySize,
-    age: 0,
-    image_path: imagePath,
-  });
-  if (petError) {
-    console.error("Could not create lost-pet profile:", petError);
-    await admin.storage.from("lost-pet-images").remove([imagePath]);
-    throw new Error("Could not prepare the lost-pet report.");
+  const { error: petsTableError } = await admin.from("pets").select("id").limit(1);
+  const usesLegacySchema = !petsTableError ||
+    !["42P01", "PGRST205"].includes(petsTableError.code ?? "");
+  let petId: string | null = null;
+  if (usesLegacySchema) {
+    petId = randomUUID();
+    const legacySize =
+      weightRange === "Under 10 lbs"
+        ? "small"
+        : weightRange === "Over 75 lbs"
+          ? "large"
+          : "medium";
+    const { error: petError } = await admin.from("pets").insert({
+      id: petId,
+      owner_id: user.id,
+      name: petName,
+      species: species.toLowerCase(),
+      breed,
+      color: "Unknown",
+      size: legacySize,
+      age: 0,
+      image_path: imagePath,
+    });
+    if (petError) {
+      console.error("Could not create lost-pet profile:", petError);
+      await admin.storage.from("lost-pet-images").remove([imagePath]);
+      throw new Error("Could not prepare the lost-pet report.");
+    }
   }
-  const { data, error } = await admin.from("lost_pet_reports").insert({
-    owner_id: user.id, pet_id: petId, pet_name: petName, species, breed, weight_range: weightRange,
-    description, last_seen_at: new Date(lastSeenAt).toISOString(), latitude, longitude,
-    location_label: locationLabel, last_seen_location: locationLabel,
-    contact_method: "email", contact_value: user.email ?? "",
-    image_path: imagePath, status: "LOST",
-  }).select("id").single();
-  if (error) {
-    console.error("Could not create lost-pet report:", error);
-    await admin.from("pets").delete().eq("id", petId);
+  let reportData: { id: string } | null = null;
+  let reportErrorMessage: string | null = null;
+  if (usesLegacySchema) {
+    const { data, error } = await admin.from("lost_pet_reports").insert({
+      owner_id: user.id, pet_id: petId, pet_name: petName, species, breed, weight_range: weightRange,
+      description, last_seen_at: new Date(lastSeenAt).toISOString(), latitude, longitude,
+      location_label: locationLabel, last_seen_location: locationLabel,
+      contact_method: "email", contact_value: user.email ?? "",
+      image_path: imagePath, status: "LOST",
+    }).select("id").single();
+    reportData = data;
+    reportErrorMessage = error?.message ?? null;
+  } else {
+    const { data, error } = await admin.from("lost_pet_reports").insert({
+      owner_id: user.id, pet_name: petName, species, breed, weight_range: weightRange,
+      description, last_seen_at: new Date(lastSeenAt).toISOString(), latitude, longitude,
+      location_label: locationLabel, image_path: imagePath, status: "LOST",
+    }).select("id").single();
+    reportData = data;
+    reportErrorMessage = error?.message ?? null;
+  }
+  if (reportErrorMessage || !reportData) {
+    console.error("Could not create lost-pet report:", reportErrorMessage);
+    if (petId) await admin.from("pets").delete().eq("id", petId);
     await admin.storage.from("lost-pet-images").remove([imagePath]);
     throw new Error("Could not create the lost-pet report.");
   }
   revalidatePath("/");
   revalidatePath("/lost-pets");
-  redirect(`/lost-pets/reports/${data.id}`);
+  redirect(`/lost-pets/reports/${reportData.id}`);
 }
 
 export async function updateLostPet(formData: FormData) {

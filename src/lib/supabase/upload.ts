@@ -1,7 +1,7 @@
 import { createSupabaseAdminClient } from "./admin";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxBytes = 5 * 1024 * 1024;
+const maxBytes = 15 * 1024 * 1024;
 
 export async function uploadImage(
   value: FormDataEntryValue | null,
@@ -12,7 +12,7 @@ export async function uploadImage(
     throw new Error("Choose an image from your device.");
   }
   if (!allowedTypes.has(value.type) || value.size > maxBytes) {
-    throw new Error("Images must be JPEG, PNG, or WebP files up to 5 MB.");
+    throw new Error("Images must be JPEG, PNG, or WebP files up to 15 MB.");
   }
 
   const extension = value.type.split("/")[1].replace("jpeg", "jpg");
