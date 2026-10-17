@@ -13,9 +13,21 @@ describe("getSupabaseConfig", () => {
     });
   });
 
+  it("supports the Supabase publishable-key environment name", () => {
+    expect(
+      getSupabaseConfig({
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "publishable-key",
+      }),
+    ).toEqual({
+      url: "https://example.supabase.co",
+      anonKey: "publishable-key",
+    });
+  });
+
   it("fails clearly when required configuration is missing", () => {
     expect(() => getSupabaseConfig({})).toThrow(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     );
   });
 });
