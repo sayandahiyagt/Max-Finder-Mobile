@@ -2,8 +2,6 @@ import {
   filterReports,
   canScrollLeft,
   canScrollRight,
-  nextIndex,
-  prevIndex,
 } from "@/lib/carousel";
 import type { ReportCard } from "@/types/reports";
 
@@ -78,34 +76,5 @@ describe("canScrollRight", () => {
 
   it("returns true when more content is available", () => {
     expect(canScrollRight({ scrollLeft: 0, scrollWidth: 800, clientWidth: 300 })).toBe(true);
-  });
-});
-
-describe("nextIndex / prevIndex", () => {
-  it("moves forward within bounds", () => {
-    expect(nextIndex(4, 0)).toBe(1);
-    expect(nextIndex(4, 2)).toBe(3);
-  });
-
-  it("clamps at the last index", () => {
-    expect(nextIndex(4, 3)).toBe(3);
-    expect(nextIndex(4, 10)).toBe(3);
-  });
-
-  it("moves backward within bounds", () => {
-    expect(prevIndex(4, 3)).toBe(2);
-    expect(prevIndex(4, 1)).toBe(0);
-  });
-
-  it("clamps at the first index", () => {
-    expect(prevIndex(4, 0)).toBe(0);
-    expect(prevIndex(4, -5)).toBe(0);
-  });
-
-  it("handles empty or single-card lists", () => {
-    expect(nextIndex(0, 0)).toBe(0);
-    expect(prevIndex(0, 0)).toBe(0);
-    expect(nextIndex(1, 0)).toBe(0);
-    expect(prevIndex(1, 0)).toBe(0);
   });
 });

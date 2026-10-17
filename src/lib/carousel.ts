@@ -27,20 +27,3 @@ export function canScrollRight(container: ScrollContainer | null): boolean {
     container.scrollLeft < container.scrollWidth - container.clientWidth
   );
 }
-
-export function clampedIndex(count: number, index: number): number {
-  if (count <= 0) return 0;
-  return Math.max(0, Math.min(index, count - 1));
-}
-
-export function nextIndex(count: number, index: number): number {
-  if (count <= 0) return 0;
-  const current = clampedIndex(count, index);
-  return Math.min(current + 1, count - 1);
-}
-
-export function prevIndex(count: number, index: number): number {
-  if (count <= 0) return 0;
-  const current = clampedIndex(count, index);
-  return Math.max(current - 1, 0);
-}
