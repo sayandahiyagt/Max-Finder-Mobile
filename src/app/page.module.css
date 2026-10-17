@@ -36,6 +36,13 @@
 .primaryAction, .secondaryAction { display: inline-flex; align-items: center; gap: 8px; padding: 12px 17px; border-radius: 9px; font-size: 13px; font-weight: 750; }
 .primaryAction { color: white; background: #198d68; box-shadow: 0 5px 12px rgba(25, 141, 104, .18); }
 .secondaryAction { color: #207d60; border: 1px solid #b9d9cd; background: white; }
+.statsGrid { max-width: 1260px; margin: 0 auto 24px; padding: 0 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.statCard { display: flex; align-items: center; gap: 12px; min-width: 0; border: 1px solid #dfe9e4; border-radius: 11px; padding: 14px 16px; background: white; }
+.statCardLost { border-color: #f2d6cf; }.statCardSpotted { border-color: #d2e3f1; }.statCardFound { border-color: #cce7db; }
+.statIcon { display: grid; flex: 0 0 auto; width: 34px; height: 34px; place-items: center; align-self: center; border-radius: 9px; color: #198d68; background: #e3f2ed; line-height: 0; }
+.statIcon svg { display: block; transform: translateY(1px); }
+.statCardLost .statIcon { color: #b45a4b; background: #fde8e3; }.statCardSpotted .statIcon { color: #357cad; background: #e5f1fb; }
+.statCard strong, .statCard div span { display: block; }.statCard strong { color: #18231f; font-size: 21px; letter-spacing: -.5px; }.statCard div span { margin-top: 2px; color: #77847f; font-size: 11px; }
 
 .explorer { max-width: 1260px; margin: 0 auto; padding: 0 32px 30px; }
 .mapToolbar { display: flex; gap: 10px; max-width: 820px; position: relative; align-items: end; }
@@ -97,6 +104,7 @@
 @media (max-width: 760px) {
   .navbar { height: 66px; }.navLinks { display: none; position: absolute; top: 65px; left: 0; right: 0; margin: 0; padding: 10px 22px 18px; background: white; border-bottom: 1px solid #e5ece8; flex-direction: column; align-items: stretch; gap: 0; box-shadow: 0 10px 18px rgba(22, 61, 47, .06); }.navLinks.navOpen { display: flex; }.navLinks a { padding: 13px 4px; border-bottom: 0; }.menuButton { display: grid; }.accountName, .accountButton svg, .iconButton { display: none; }
   .hero { padding: 33px 20px 24px; display: block; }.hero h1 { font-size: 33px; }.heroActions { margin-top: 22px; }.primaryAction, .secondaryAction { flex: 1; justify-content: center; padding: 12px 9px; }
+  .statsGrid { grid-template-columns: 1fr; margin-bottom: 18px; padding: 0 20px; gap: 8px; }.statCard { padding: 11px 13px; }.statCard strong { font-size: 19px; }
   .explorer { padding: 0 20px 22px; }.mapToolbar { display: block; }.locationButton { margin-top: 8px; height: 40px; width: 100%; justify-content: center; }.radiusControl { margin-top: 8px; }.radiusControl select { width: 100%; }.searchResults { top: 51px; width: 100%; }.filterRow { display: block; }.mapStatus { margin-top: 10px; }.mapFrame { min-height: 430px; height: 61vh; }.mapLegend { left: 10px; bottom: 10px; gap: 8px; padding: 8px; }.activityFilters { grid-template-columns: 1fr 1fr; }.activityCards { grid-template-columns: 1fr; }.resultsHeading h2 { font-size: 21px; }
   .helpStrip { margin: 0 20px 20px; align-items: flex-start; }.helpStrip a { display: none; }.footer { padding: 20px; display: block; }.footerLinks { margin-top: 14px; gap: 13px; flex-wrap: wrap; }
 }
