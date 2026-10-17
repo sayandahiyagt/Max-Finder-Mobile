@@ -1,0 +1,68 @@
+[
+  {
+    "id": "a1111111-1111-4111-8111-111111111111",
+    "email": "maxfinder-test-01@example.invalid",
+    "display_name": "Test User 01",
+    "auth_created_at": "2026-10-01T10:00:00.000Z",
+    "profile_created_at": "2026-10-01T10:00:01.000Z",
+    "profile": {
+      "id": "a1111111-1111-4111-8111-111111111111",
+      "display_name": "Test User 01",
+      "created_at": "2026-10-01T10:00:01.000Z"
+    },
+    "admin_intended": false
+  },
+  {
+    "id": "a2222222-2222-4222-8222-222222222222",
+    "email": "maxfinder-test-02@example.invalid",
+    "display_name": "Test User 02",
+    "auth_created_at": "2026-10-01T10:01:00.000Z",
+    "profile_created_at": "2026-10-01T10:01:01.000Z",
+    "profile": {
+      "id": "a2222222-2222-4222-8222-222222222222",
+      "display_name": "Test User 02",
+      "created_at": "2026-10-01T10:01:01.000Z"
+    },
+    "admin_intended": false
+  },
+  {
+    "id": "a3333333-3333-4333-8333-333333333333",
+    "email": "maxfinder-test-03@example.invalid",
+    "display_name": "Test User 03",
+    "auth_created_at": "2026-10-01T10:02:00.000Z",
+    "profile_created_at": "2026-10-01T10:02:01.000Z",
+    "profile": {
+      "id": "a3333333-3333-4333-8333-333333333333",
+      "display_name": "Test User 03",
+      "created_at": "2026-10-01T10:02:01.000Z"
+    },
+    "admin_intended": false
+  },
+  {
+    "id": "a4444444-4444-4444-8444-444444444444",
+    "email": "maxfinder-test-04@example.invalid",
+    "display_name": "Test User 04",
+    "auth_created_at": "2026-10-01T10:03:00.000Z",
+    "profile_created_at": "2026-10-01T10:03:01.000Z",
+    "profile": {
+      "id": "a4444444-4444-4444-8444-444444444444",
+      "display_name": "Test User 04",
+      "created_at": "2026-10-01T10:03:01.000Z"
+    },
+    "admin_intended": false
+  },
+  {
+    "id": "a5555555-5555-4555-8555-555555555555",
+    "email": "maxfinder-test-05@example.invalid",
+    "display_name": "Test Admin 05",
+    "auth_created_at": "2026-10-01T10:04:00.000Z",
+    "profile_created_at": "2026-10-01T10:04:01.000Z",
+    "profile": {
+      "id": "a5555555-5555-4555-8555-555555555555",
+      "display_name": "Test Admin 05",
+      "created_at": "2026-10-01T10:04:01.000Z"
+    },
+    "admin_intended": true,
+    "admin_note": "The committed `profiles` migration has no `role` column, so ADMIN status is not representable in the application schema here. A real admin account must set `auth.users.app_metadata.role = 'admin'` (or adopt the `users.role` column from docs/data-model.md) before relying on this account for admin-only behavior."
+  }
+]
