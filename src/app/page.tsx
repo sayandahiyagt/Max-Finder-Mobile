@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { MapPin, PawPrint, Plus, Search, ShieldCheck } from "lucide-react";
+import { Eye, MapPin, PawPrint, Plus, Search, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
@@ -20,6 +20,11 @@ export default function Home() {
     reports: 0,
     spottings: 0,
   });
+  const [communityStats, setCommunityStats] = useState<{
+    lost: number;
+    spottings: number;
+    found: number;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<
     Array<{ latitude: number; longitude: number; label: string }>
@@ -41,6 +46,25 @@ export default function Home() {
       setActivityCounts(counts),
     [],
   );
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/stats", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Stats request failed");
+        return response.json() as Promise<{
+          lost: number;
+          spottings: number;
+          found: number;
+        }>;
+      })
+      .then(setCommunityStats)
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setCommunityStats(null);
+      });
+    return () => controller.abort();
+  }, []);
+
   useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < 2) {
@@ -125,6 +149,23 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {communityStats && (
+        <section className={styles.statsGrid} aria-label="Community recovery statistics">
+          <div className={`${styles.statCard} ${styles.statCardLost}`}>
+            <span className={styles.statIcon}><PawPrint size={17} /></span>
+            <div><strong>{communityStats.lost}</strong><span>Active lost pets</span></div>
+          </div>
+          <div className={`${styles.statCard} ${styles.statCardSpotted}`}>
+            <span className={styles.statIcon}><Eye size={17} /></span>
+            <div><strong>{communityStats.spottings}</strong><span>Community spottings</span></div>
+          </div>
+          <div className={`${styles.statCard} ${styles.statCardFound}`}>
+            <span className={styles.statIcon}><ShieldCheck size={17} /></span>
+            <div><strong>{communityStats.found}</strong><span>Pets found</span></div>
+          </div>
+        </section>
+      )}
 
       <section className={styles.explorer} aria-label="Lost pet map">
         <div className={styles.mapToolbar}>
