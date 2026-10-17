@@ -6,7 +6,10 @@ import { Eye, MapPin, PawPrint, Plus, Search, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
+import { AnimalCarousel } from "@/components/animal-carousel";
 import type { MapReport } from "@/components/map-explorer";
+import { SuccessStories } from "@/components/success-stories";
+import type { ReportCard } from "@/types/reports";
 import styles from "./page.module.css";
 import { breedOptions } from "@/lib/breeds";
 
@@ -25,6 +28,11 @@ export default function Home() {
     spottings: number;
     found: number;
   } | null>(null);
+  const [reports, setReports] = useState<ReportCard[] | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [reportsError, setReportsError] = useState<string | null>(null);
+  const showDemoStories =
+    process.env.NEXT_PUBLIC_SUCCESS_STORIES_DEMO === "true";
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<
     Array<{ latitude: number; longitude: number; label: string }>
@@ -61,6 +69,27 @@ export default function Home() {
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
         setCommunityStats(null);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/reports", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Reports request failed");
+        return response.json() as Promise<{ reports: ReportCard[] }>;
+      })
+      .then((data) => {
+        setReportsError(null);
+        setReports(data.reports);
+        setReportsLoading(false);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setReports(null);
+        setReportsError("Lost and found reports could not be loaded.");
+        setReportsLoading(false);
       });
     return () => controller.abort();
   }, []);
@@ -148,7 +177,13 @@ export default function Home() {
             <PawPrint size={18} /> Report lost pet
           </Link>
         </div>
-      </section>
+       </section>
+
+      <AnimalCarousel
+        reports={reports ?? []}
+        loading={reportsLoading}
+        error={reportsError}
+      />
 
       {communityStats && (
         <section className={styles.statsGrid} aria-label="Community recovery statistics">
@@ -260,7 +295,9 @@ export default function Home() {
           </div>
           {filteredActivities.length ? <div className={styles.activityCards}>{filteredActivities.map((activity) => <Link className={styles.activityCard} key={`${activity.type}-${activity.id}`} href={activity.type === "spotted" ? `/spottings/${activity.id}` : `/lost-pets/reports/${activity.id}`}>{activity.imageUrl ? <img className={styles.activityCardImage} src={activity.imageUrl} alt="" /> : <div className={styles.activityCardImagePlaceholder}>No image</div>}<div className={styles.activityCardBody}><span className={`${styles.cardBadge} ${activity.type === "lost" ? styles.cardBadgeLost : styles.cardBadgeSpotted}`}>{activity.type === "lost" ? "Lost pet" : "Spotting"}</span><small>{activity.locationLabel ?? "Address unavailable"}</small><small>{activity.time}</small><strong>View details →</strong></div></Link>)}</div> : <div className={styles.noResults}>No activity matches these filters.</div>}
         </section>
-      </section>
+       </section>
+
+      <SuccessStories reports={reports ?? []} showDemo={showDemoStories} />
 
       </main>
     </AppShell>

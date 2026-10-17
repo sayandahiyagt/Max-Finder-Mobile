@@ -1,0 +1,253 @@
+.carouselSection {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 0 32px 28px;
+}
+
+.carouselHeader {
+  margin-bottom: 20px;
+}
+
+.carouselHeader .eyebrow {
+  margin-bottom: 8px;
+}
+
+.carouselHeader h2 {
+  font-size: clamp(24px, 3.5vw, 32px);
+  letter-spacing: -1.2px;
+  line-height: 1.15;
+}
+
+.carouselHeader p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.carouselFilters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filterButton {
+  border: 1px solid transparent;
+  border-radius: 99px;
+  padding: 8px 14px;
+  color: #6b7a72;
+  background: #eef5f1;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.filterButton:hover {
+  color: #245b45;
+  background: #e3f2ed;
+}
+
+.filterButton:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.filterButtonActive {
+  color: #167755;
+  background: white;
+  border-color: #c8e5da;
+  box-shadow: 0 2px 8px rgba(46, 79, 65, 0.06);
+}
+
+.carouselViewport {
+  position: relative;
+}
+
+.carouselTrack {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 12px;
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.carouselTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselTrack:focus {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.carouselTrack:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.carouselCard {
+  flex: 0 0 auto;
+  width: 270px;
+  scroll-snap-align: start;
+  scroll-margin-left: 4px;
+}
+
+.carouselButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 9px;
+  color: #3a4f44;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(46, 79, 65, 0.12);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.carouselButton:hover {
+  background: white;
+  box-shadow: 0 6px 16px rgba(46, 79, 65, 0.18);
+}
+
+.carouselButton:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.carouselButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: 0 2px 8px rgba(46, 79, 65, 0.08);
+}
+
+.carouselButton:disabled:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.carouselButtonPrev {
+  left: 0;
+}
+
+.carouselButtonNext {
+  right: 0;
+}
+
+.carouselControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.carouselCount {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.carouselDots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.carouselDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 0;
+  background: #cbd5cf;
+  cursor: pointer;
+}
+
+.carouselDotActive {
+  background: var(--green);
+}
+
+.carouselLoading {
+  display: flex;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.carouselSkeleton {
+  flex: 0 0 auto;
+  width: 270px;
+}
+
+.skeletonCard {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: white;
+  box-shadow: 0 6px 18px rgba(46, 79, 65, 0.04);
+}
+
+.skeletonImage {
+  width: 100%;
+  height: 225px;
+  border-radius: 13px 13px 0 0;
+  background: linear-gradient(90deg, #eef0ef 0%, #e3e6e5 50%, #eef0ef 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonImage:last-child {
+  height: 160px;
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 17px;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eef0ef 0%, #e3e6e5 50%, #eef0ef 100%);
+}
+
+.skeletonLine.short {
+  width: 40%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carouselTrack {
+    scroll-behavior: auto;
+  }
+
+  .skeletonImage {
+    animation: none;
+    background-color: #e3e6e5;
+  }
+}
+
+@media (max-width: 760px) {
+  .carouselSection {
+    padding: 0 20px 24px;
+  }
+
+  .carouselCard {
+    width: 270px;
+  }
+}
