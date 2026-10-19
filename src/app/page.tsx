@@ -6,6 +6,7 @@ import { Eye, MapPin, PawPrint, Plus, Search, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
+import { ReunionsCarousel } from "@/components/reunions-carousel";
 import type { MapReport } from "@/components/map-explorer";
 import styles from "./page.module.css";
 import { breedOptions } from "@/lib/breeds";
@@ -262,7 +263,9 @@ export default function Home() {
         </section>
       </section>
 
-      </main>
+      <ReunionsCarousel />
+
+    </main>
     </AppShell>
   );
 }

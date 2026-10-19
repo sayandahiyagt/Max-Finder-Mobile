@@ -1,0 +1,213 @@
+.reunionSection {
+  max-width: 1260px;
+  margin: 0 auto 42px;
+  padding: 0 32px;
+}
+
+.reunionEyebrow {
+  color: #218563;
+  text-transform: uppercase;
+  letter-spacing: 1.25px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.reunionSection h2 {
+  font-size: clamp(26px, 4vw, 32px);
+  letter-spacing: -1px;
+  margin-bottom: 22px;
+}
+
+.reunionCarousel {
+  position: relative;
+}
+
+.reunionCarousel__viewport {
+  overflow: hidden;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+  -ms-touch-action: pan-y;
+  touch-action: pan-y;
+}
+
+.reunionCarousel__viewport[data-loading] {
+  cursor: default;
+}
+
+.reunionCarousel__container {
+  display: flex;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.reunionCarousel__slide {
+  position: relative;
+  min-width: 0;
+  flex: 0 0 100%;
+  padding: 0 10px;
+}
+
+@media (min-width: 761px) {
+  .reunionCarousel__slide {
+    flex: 0 0 50%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .reunionCarousel__slide {
+    flex: 0 0 33.333%;
+  }
+}
+
+.reunionCarousel__empty {
+  border: 1px dashed #cbdcd4;
+  border-radius: 11px;
+  padding: 28px;
+  color: #77847f;
+  background: white;
+  text-align: center;
+  font-size: 13px;
+}
+
+.reunionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid #dfe9e4;
+  border-radius: 11px;
+  background: white;
+  box-shadow: 0 6px 18px rgba(46, 79, 65, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.reunionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 23px rgba(46, 79, 65, 0.09);
+}
+
+.reunionImage {
+  width: 100%;
+  height: 145px;
+  object-fit: cover;
+  background: #e8f5f0;
+  display: grid;
+  place-items: center;
+  color: #718078;
+  font-size: 12px;
+}
+
+.reunionImagePlaceholder {
+  display: grid;
+  place-items: center;
+  color: #718078;
+  background: #e8f5f0;
+  font-size: 12px;
+}
+
+.reunionCardBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 15px 17px 17px;
+  flex: 1;
+}
+
+.reunionCard h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  color: #18231f;
+}
+
+.reunionBadge {
+  border-radius: 5px;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #167755;
+  background: #e2f3ed;
+}
+
+.reunionCard p {
+  color: #66766e;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0 0 6px;
+}
+
+.reunionCard strong {
+  margin-top: auto;
+  color: #16805e;
+  font-size: 11px;
+}
+
+.reunionControlBtn {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 56px;
+  border: 1px solid #dfe9e4;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #34443d;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.reunionControlBtnPrev {
+  left: -8px;
+}
+
+.reunionControlBtnNext {
+  right: -8px;
+}
+
+.reunionControlBtn:hover {
+  border-color: #42a987;
+  background: #e3f2ed;
+  color: #198d68;
+}
+
+.reunionControlBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.reunionControlBtn:disabled:hover {
+  border-color: #dfe9e4;
+  background: rgba(255, 255, 255, 0.94);
+  color: #34443d;
+}
+
+.reunionLoading {
+  border: 1px dashed #cbdcd4;
+  border-radius: 11px;
+  padding: 28px;
+  color: #77847f;
+  background: white;
+  text-align: center;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .reunionSection {
+    padding: 0 20px;
+  }
+
+  .reunionSection h2 {
+    font-size: 22px;
+  }
+}
