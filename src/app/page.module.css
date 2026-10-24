@@ -55,6 +55,7 @@
 .searchResults button svg { flex: 0 0 auto; color: #198d68; }
 .searchResults p { padding: 12px; color: #a94739; font-size: 12px; }
 .locationButton { border: 1px solid #b9d9cd; color: #238260; background: white; border-radius: 9px; padding: 0 15px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; gap: 7px; align-items: center; }
+.locationButton:disabled { cursor: wait; opacity: .65; }
 .radiusControl { display: grid; gap: 5px; color: #617169; font-size: 11px; font-weight: 750; }
 .radiusControl select { height: 44px; min-width: 125px; border: 1px solid #b9d9cd; border-radius: 9px; padding: 0 10px; color: #207d60; background: white; font-size: 12px; font-weight: 700; outline: none; }
 .filterRow { display: flex; justify-content: space-between; align-items: center; margin: 15px 0 12px; }

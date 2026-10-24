@@ -120,11 +120,13 @@ export function ReunionsCarousel() {
                       {reunion.species && reunion.breed ? (
                         <p>{reunion.species} · {reunion.breed}</p>
                       ) : (
-                        <p>{reunion.species ?? reunion.breed ?? ""}</p>
+                        <p>{reunion.species ?? reunion.breed ?? "Pet"}</p>
                       )}
+                      {reunion.color && <p>{reunion.color}</p>}
                       <p>{reunion.locationLabel ?? "Address unavailable"}</p>
+                      {reunion.description && <p>{reunion.description}</p>}
                       <strong>
-                        Last seen: {new Date(reunion.lastSeenAt).toLocaleDateString()}
+                        Reunited: {new Date(reunion.reunitedAt ?? reunion.lastSeenAt).toLocaleDateString()}
                       </strong>
                     </div>
                   </Link>
