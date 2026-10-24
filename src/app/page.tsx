@@ -34,6 +34,7 @@ export default function Home() {
     [number, number] | null
   >(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [activities, setActivities] = useState<MapReport[]>([]);
   const [activityType, setActivityType] = useState<"all" | "lost" | "spotted">("all");
   const [radius, setRadius] = useState("1");
@@ -66,41 +67,36 @@ export default function Home() {
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
+  const searchForLocation = async () => {
     const query = searchQuery.trim();
     if (query.length < 2) {
-      return undefined;
+      setSearchResults([]);
+      setSearchError("Enter at least two characters.");
+      return;
     }
+
     const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      setSearchError(null);
-      try {
-        const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("Search failed");
-        const results = (await response.json()) as Array<{
-          latitude: number;
-          longitude: number;
-          label: string;
-        }>;
-        setSearchResults(results);
-        if (results[0]) {
-          setSearchLocation([results[0].latitude, results[0].longitude]);
-        }
-        if (results.length === 0) setSearchError("No matching locations found.");
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setSearchResults([]);
-        setSearchError("Location search is temporarily unavailable.");
-      } finally {
-      }
-    }, 300);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [searchQuery]);
+    setIsSearching(true);
+    setSearchError(null);
+    try {
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Search failed");
+      const results = (await response.json()) as Array<{
+        latitude: number;
+        longitude: number;
+        label: string;
+      }>;
+      setSearchResults(results);
+      if (results.length === 0) setSearchError("No matching locations found.");
+    } catch {
+      setSearchResults([]);
+      setSearchError("Location search is temporarily unavailable.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const filteredActivities = activities.filter((activity) => {
     if (activityType !== "all" && activity.type !== activityType) return false;
@@ -170,7 +166,13 @@ export default function Home() {
 
       <section className={styles.explorer} aria-label="Lost pet map">
         <div className={styles.mapToolbar}>
-          <div className={styles.searchForm}>
+          <form
+            className={styles.searchForm}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void searchForLocation();
+            }}
+          >
           <label className={styles.searchBox}>
             <Search size={18} />
             <input
@@ -187,7 +189,10 @@ export default function Home() {
               aria-label="Search a neighborhood or address"
             />
           </label>
-          </div>
+          <button className={styles.locationButton} type="submit" disabled={isSearching}>
+            {isSearching ? "Searching…" : "Search"}
+          </button>
+          </form>
           {(searchResults.length > 0 || searchError) && (
             <div className={styles.searchResults}>
               {searchResults.map((result) => (

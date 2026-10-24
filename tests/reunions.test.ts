@@ -1,4 +1,8 @@
-import { formatReunions, type RawReunionReport } from "@/lib/reunions";
+import {
+  formatReunions,
+  mergeReunionData,
+  type RawReunionReport,
+} from "@/lib/reunions";
 
 const getImageUrl = (imagePath: string) =>
   `https://example.supabase.co/storage/v1/object/public/lost-pet-images/${imagePath}`;
@@ -105,6 +109,54 @@ describe("formatReunions", () => {
         locationLabel: null,
         imageUrl: null,
         lastSeenAt: "2026-09-28T08:30:00Z",
+      },
+    ]);
+  });
+
+  it("fills production report fields from the related pet and pet image", () => {
+    const reports = [
+      {
+        id: "legacy-report",
+        pet_id: "pet-1",
+        pet_name: null,
+        species: null,
+        breed: null,
+        description: null,
+        image_path: null,
+        location_label: "Prospect Park, Brooklyn, NY",
+        last_seen_at: "2026-10-10T16:00:00Z",
+        updated_at: "2026-10-20T12:00:00Z",
+      },
+    ];
+
+    expect(
+      mergeReunionData(
+        reports,
+        [
+          {
+            id: "pet-1",
+            name: "Luna",
+            species: "cat",
+            breed: "Domestic Shorthair",
+            color: "Gray tabby and white",
+            description: "White chest, white paws, and a purple collar.",
+            image_path: null,
+          },
+        ],
+        [{ pet_id: "pet-1", storage_path: "seed/luna.webp" }],
+      ),
+    ).toEqual([
+      {
+        id: "legacy-report",
+        pet_name: "Luna",
+        species: "Cat",
+        breed: "Domestic Shorthair",
+        color: "Gray tabby and white",
+        description: "White chest, white paws, and a purple collar.",
+        location_label: "Prospect Park, Brooklyn, NY",
+        image_path: "seed/luna.webp",
+        last_seen_at: "2026-10-10T16:00:00Z",
+        updated_at: "2026-10-20T12:00:00Z",
       },
     ]);
   });

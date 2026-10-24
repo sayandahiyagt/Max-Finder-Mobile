@@ -21,6 +21,18 @@ Populate `.env.local` with the authorized Supabase development values:
 
 Never commit that file or any service-role key.
 
+## Local development data
+
+After starting local Supabase and applying the repository migrations, run:
+
+```powershell
+npm run seed:dev
+```
+
+The command creates two passwordless development identities, two related pets, three lost-pet reports including two reunited pets, and two spottings. It uploads the bundled WebP images to deterministic paths and upserts fixed record IDs, so repeated runs do not create duplicates.
+
+The script accepts only `localhost`, `127.0.0.1`, or `::1` Supabase URLs. It refuses hosted and production projects and never deletes existing records.
+
 ## Supabase database workflow
 
 The repository migrations are in [`supabase/migrations`](./supabase/migrations).

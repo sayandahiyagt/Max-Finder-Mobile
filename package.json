@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "seed:dev": "node scripts/seed-development.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
