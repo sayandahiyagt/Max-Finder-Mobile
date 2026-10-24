@@ -29,7 +29,7 @@ After starting local Supabase and applying the repository migrations, run:
 npm run seed:dev
 ```
 
-The command creates two passwordless development identities, three lost-pet reports including two reunited pets, and two spottings. It uploads the bundled WebP images to deterministic paths and upserts fixed record IDs, so repeated runs do not create duplicates.
+The command creates two passwordless development identities, two related pets, three lost-pet reports including two reunited pets, and two spottings. It uploads the bundled WebP images to deterministic paths and upserts fixed record IDs, so repeated runs do not create duplicates.
 
 The script accepts only `localhost`, `127.0.0.1`, or `::1` Supabase URLs. It refuses hosted and production projects and never deletes existing records.
 

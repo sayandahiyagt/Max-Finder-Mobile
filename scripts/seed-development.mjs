@@ -102,9 +102,38 @@ async function main() {
     "maple.webp",
   );
 
+  const { error: petError } = await admin.from("pets").upsert([
+    {
+      id: "30000000-0000-4000-8000-000000000001",
+      owner_id: maya.id,
+      name: "Maple",
+      species: "dog",
+      breed: "Golden Retriever",
+      color: "Golden",
+      size: "large",
+      age: 5,
+      image_path: "development-seed/maple.webp",
+      updated_at: "2026-10-21T20:15:00.000Z",
+    },
+    {
+      id: "30000000-0000-4000-8000-000000000002",
+      owner_id: jordan.id,
+      name: "Luna",
+      species: "cat",
+      breed: "Domestic Shorthair",
+      color: "Gray tabby and white",
+      size: "small",
+      age: 3,
+      image_path: "development-seed/luna.webp",
+      updated_at: "2026-10-20T16:45:00.000Z",
+    },
+  ]);
+  if (petError) throw petError;
+
   const { error: reportError } = await admin.from("lost_pet_reports").upsert([
     {
       id: "10000000-0000-4000-8000-000000000001",
+      pet_id: "30000000-0000-4000-8000-000000000001",
       owner_id: maya.id,
       pet_name: "Maple",
       species: "Dog",
@@ -114,13 +143,17 @@ async function main() {
       last_seen_at: "2026-10-21T20:15:00.000Z",
       latitude: 40.660204,
       longitude: -73.968956,
+      last_seen_location: "Prospect Park West, Brooklyn, NY",
       location_label: "Prospect Park West, Brooklyn, NY",
+      contact_method: "email",
+      contact_value: "maya.seed@maxfinder.local",
       image_path: "development-seed/maple.webp",
       status: "LOST",
       updated_at: "2026-10-21T20:15:00.000Z",
     },
     {
       id: "10000000-0000-4000-8000-000000000002",
+      pet_id: "30000000-0000-4000-8000-000000000002",
       owner_id: jordan.id,
       pet_name: "Luna",
       species: "Cat",
@@ -130,13 +163,17 @@ async function main() {
       last_seen_at: "2026-10-10T13:30:00.000Z",
       latitude: 40.673718,
       longitude: -73.970673,
+      last_seen_location: "Lincoln Place near 7th Avenue, Brooklyn, NY",
       location_label: "Lincoln Place near 7th Avenue, Brooklyn, NY",
+      contact_method: "email",
+      contact_value: "jordan.seed@maxfinder.local",
       image_path: "development-seed/luna.webp",
       status: "FOUND",
       updated_at: "2026-10-20T16:45:00.000Z",
     },
     {
       id: "10000000-0000-4000-8000-000000000003",
+      pet_id: "30000000-0000-4000-8000-000000000001",
       owner_id: maya.id,
       pet_name: "Maple",
       species: "Dog",
@@ -146,7 +183,10 @@ async function main() {
       last_seen_at: "2026-09-12T22:00:00.000Z",
       latitude: 40.667622,
       longitude: -73.987041,
+      last_seen_location: "5th Avenue near 9th Street, Brooklyn, NY",
       location_label: "5th Avenue near 9th Street, Brooklyn, NY",
+      contact_method: "email",
+      contact_value: "maya.seed@maxfinder.local",
       image_path: "development-seed/maple.webp",
       status: "FOUND",
       updated_at: "2026-09-13T18:20:00.000Z",
@@ -184,7 +224,7 @@ async function main() {
   ]);
   if (spottingError) throw spottingError;
 
-  console.info("Development seed complete: 2 users, 3 reports, and 2 spottings.");
+  console.info("Development seed complete: 2 users, 2 pets, 3 reports, and 2 spottings.");
 }
 
 main().catch((error) => {
