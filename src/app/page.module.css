@@ -115,3 +115,41 @@
   .explorer { padding: 0 20px 22px; }.mapToolbar { display: block; }.locationButton { margin-top: 8px; height: 40px; width: 100%; justify-content: center; }.radiusControl { margin-top: 8px; }.radiusControl select { width: 100%; }.searchResults { top: 51px; width: 100%; }.filterRow { display: block; }.mapStatus { margin-top: 10px; }.mapFrame { min-height: 430px; height: 61vh; }.mapLegend { left: 10px; bottom: 10px; gap: 8px; padding: 8px; }.activityFilters { grid-template-columns: 1fr 1fr; }.activityCards { grid-template-columns: 1fr; }.resultsHeading h2 { font-size: 21px; }
   .helpStrip { margin: 0 20px 20px; align-items: flex-start; }.helpStrip a { display: none; }.footer { padding: 20px; display: block; }.footerLinks { margin-top: 14px; gap: 13px; flex-wrap: wrap; }
 }
+
+.shell { background: #111a18; color: #e4eee9; }
+.navbar { background: rgba(19,31,27,.97); border-color: #2b4038; }
+.brand, .accountButton { color: #e4eee9; }
+.navLinks a { color: #9aada5; }
+.navLinks a:hover, .navLinks .navActive { color: #55c99e; border-color: #35b487; }
+.iconButton, .menuButton { color: #9aada5; }
+.avatar { color: #72d4ae; background: #1d4235; }
+.heroCopy, .statCard div span { color: #9aada5; }
+.secondaryAction { color: #72d4ae; border-color: #39705d; background: #1d342c; }
+.primaryAction { background: #2d9d75; box-shadow: 0 5px 12px rgba(0,0,0,.25); }
+.statCard, .searchBox, .searchResults, .locationButton, .radiusControl select,
+.advancedFiltersToggle, .activityFilters { border-color: #2b4038; background: #1a2824; color: #e4eee9; }
+.statCardLost { border-color: #70443e; }
+.statCardSpotted { border-color: #3c5970; }
+.statCardFound { border-color: #35604e; }
+.statIcon { color: #55c99e; background: #1d4235; }
+.statCardLost .statIcon { color: #e58b7c; background: #4a2d2a; }
+.statCardSpotted .statIcon { color: #79b9e8; background: #293d50; }
+.searchBox { color: #81988e; box-shadow: 0 2px 7px rgba(0,0,0,.2); }
+.searchBox input, .activityFilters select { color: #e4eee9; background: #15231f; }
+.searchResults button { color: #d3e2dc; background: #1a2824; border-color: #2b4038; }
+.searchResults button:hover { background: #20332d; }
+.locationButton { color: #72d4ae; }
+.radiusControl, .mapStatus, .activityFilters label { color: #9aada5; }
+.radiusControl select { color: #72d4ae; }
+.mapFrame { border-color: #2b4038; background: #1b3028; box-shadow: 0 10px 28px rgba(0,0,0,.28); }
+.mapLoading { color: #8bcab1; background: #1b3028; }
+.mapLegend { color: #c4d5ce; background: rgba(26,40,36,.94); border-color: #3a554a; }
+.advancedFiltersToggle { color: #d3e2dc; }
+.activityFilters input, .activityFilters select { border-color: #385247; color: #e4eee9; background: #15231f; }
+.helpStrip { color: #d3e2dc; background: #1d4235; border-color: #35604e; }
+.helpStrip p, .activityCard small, .footer { color: #9aada5; }
+.mapStatus, .activityCount { color: #d3e2dc; }
+.activityCount { font-weight: 700; }
+.activityDivider { color: #6f8b7e; }
+.statsGrid .statCard strong { color: #f2fbf7; }
+.statsGrid .statCard div span { color: #c7d8d1; }

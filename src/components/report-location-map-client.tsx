@@ -37,7 +37,7 @@ export function ReportLocationMapClient({
           dragging={false}
           doubleClickZoom={false}
           touchZoom={false}
-          className="maxfinder-map"
+          className="maxfinder-map dark-map"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

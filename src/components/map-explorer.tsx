@@ -215,7 +215,7 @@ export default function MapExplorer({
       zoom={14}
       scrollWheelZoom
       zoomControl
-      className="maxfinder-map"
+      className="maxfinder-map dark-map"
       aria-label="Map showing nearby lost pets and community spottings"
     >
       <TileLayer
@@ -237,10 +237,10 @@ export default function MapExplorer({
           center={searchLocation}
           radius={radiusMiles * 1609.344}
           pathOptions={{
-            color: "#198d68",
-            fillColor: "#198d68",
-            fillOpacity: 0.08,
-            weight: 2,
+            color: "#62e0b0",
+            fillColor: "#35b487",
+            fillOpacity: 0.18,
+            weight: 3,
             dashArray: "6 6",
           }}
         />
