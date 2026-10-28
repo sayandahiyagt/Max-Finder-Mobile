@@ -5,7 +5,7 @@
 }
 
 .reunionEyebrow {
-  color: #218563;
+  color: #55c99e;
   text-transform: uppercase;
   letter-spacing: 1.25px;
   font-size: 11px;
@@ -66,11 +66,11 @@
 }
 
 .reunionCarousel__empty {
-  border: 1px dashed #cbdcd4;
+  border: 1px dashed #466257;
   border-radius: 11px;
   padding: 28px;
-  color: #77847f;
-  background: white;
+  color: #9aada5;
+  background: #1a2824;
   text-align: center;
   font-size: 13px;
 }
@@ -80,10 +80,10 @@
   flex-direction: column;
   align-items: stretch;
   overflow: hidden;
-  border: 1px solid #dfe9e4;
+  border: 1px solid #2b4038;
   border-radius: 11px;
-  background: white;
-  box-shadow: 0 6px 18px rgba(46, 79, 65, 0.04);
+  background: #1a2824;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   height: 100%;
   text-decoration: none;
@@ -99,18 +99,18 @@
   width: 100%;
   height: 145px;
   object-fit: cover;
-  background: #e8f5f0;
+  background: #20332d;
   display: grid;
   place-items: center;
-  color: #718078;
+  color: #9aada5;
   font-size: 12px;
 }
 
 .reunionImagePlaceholder {
   display: grid;
   place-items: center;
-  color: #718078;
-  background: #e8f5f0;
+  color: #9aada5;
+  background: #20332d;
   font-size: 12px;
 }
 
@@ -125,7 +125,7 @@
 .reunionCard h3 {
   margin: 0 0 5px;
   font-size: 16px;
-  color: #18231f;
+  color: #e4eee9;
 }
 
 .reunionBadge {
@@ -133,12 +133,12 @@
   padding: 4px 7px;
   font-size: 10px;
   font-weight: 700;
-  color: #167755;
-  background: #e2f3ed;
+  color: #8be0bd;
+  background: #1d4235;
 }
 
 .reunionCard p {
-  color: #66766e;
+  color: #b1c2ba;
   font-size: 12px;
   line-height: 1.45;
   margin: 0 0 6px;
@@ -146,7 +146,7 @@
 
 .reunionCard strong {
   margin-top: auto;
-  color: #16805e;
+  color: #72d4ae;
   font-size: 11px;
 }
 
@@ -158,10 +158,10 @@
   place-items: center;
   width: 34px;
   height: 56px;
-  border: 1px solid #dfe9e4;
+  border: 1px solid #2b4038;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #34443d;
+  background: rgba(26, 40, 36, 0.94);
+  color: #d3e2dc;
   cursor: pointer;
   transform: translateY(-50%);
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
@@ -177,8 +177,8 @@
 
 .reunionControlBtn:hover {
   border-color: #42a987;
-  background: #e3f2ed;
-  color: #198d68;
+  background: #1d4235;
+  color: #72d4ae;
 }
 
 .reunionControlBtn:disabled {
@@ -187,17 +187,17 @@
 }
 
 .reunionControlBtn:disabled:hover {
-  border-color: #dfe9e4;
-  background: rgba(255, 255, 255, 0.94);
-  color: #34443d;
+  border-color: #2b4038;
+  background: rgba(26, 40, 36, 0.94);
+  color: #d3e2dc;
 }
 
 .reunionLoading {
-  border: 1px dashed #cbdcd4;
+  border: 1px dashed #466257;
   border-radius: 11px;
   padding: 28px;
-  color: #77847f;
-  background: white;
+  color: #9aada5;
+  background: #1a2824;
   text-align: center;
   font-size: 13px;
 }

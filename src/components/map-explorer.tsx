@@ -12,8 +12,15 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
+
+export type MapFilters = {
+  activityType: "all" | "lost" | "spotted";
+  species: string;
+  breed: string;
+  timeRange: string;
+};
 
 type MapExplorerProps = {
   locationRequest?: number;
@@ -22,6 +29,7 @@ type MapExplorerProps = {
   onLocationChange?: (position: [number, number]) => void;
   searchLocation?: [number, number] | null;
   radiusMiles?: number | null;
+  filters?: MapFilters;
 };
 
 export type MapReport = {
@@ -43,6 +51,38 @@ const searchIcon = L.divIcon({
   iconSize: [10, 10],
   iconAnchor: [5, 5],
 });
+
+function matchesMapFilters(
+  report: MapReport,
+  filters: MapFilters,
+  searchLocation: [number, number] | null,
+  radiusMiles: number | null,
+) {
+  if (filters.activityType !== "all" && report.type !== filters.activityType) return false;
+  if (filters.species && (report.species ?? "").toLowerCase() !== filters.species.toLowerCase()) return false;
+  if (filters.breed && !(report.breed ?? "").toLowerCase().includes(filters.breed.toLowerCase())) return false;
+  if (filters.timeRange !== "any") {
+    const days = Number(filters.timeRange);
+    if (Number.isFinite(days) && Date.now() - new Date(report.timestamp).getTime() > days * 86400000) {
+      return false;
+    }
+  }
+  if (searchLocation && radiusMiles !== null && Number.isFinite(radiusMiles) && radiusMiles > 0) {
+    const [lat, lng] = searchLocation;
+    const [reportLat, reportLng] = report.position;
+    const earthRadius = 3958.8;
+    const dLat = ((reportLat - lat) * Math.PI) / 180;
+    const dLng = ((reportLng - lng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat * Math.PI) / 180) *
+        Math.cos((reportLat * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    const miles = earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    if (miles > radiusMiles) return false;
+  }
+  return true;
+}
 
 function ResizeMap() {
   const map = useMap();
@@ -109,15 +149,6 @@ function BoundsWatcher({ onChange }: { onChange: (bounds: string) => void }) {
   return null;
 }
 
-function MapLocationSelector({ onLocationChange }: { onLocationChange?: (position: [number, number]) => void }) {
-  useMapEvents({
-    click(event) {
-      onLocationChange?.([event.latlng.lat, event.latlng.lng]);
-    },
-  });
-  return null;
-}
-
 export default function MapExplorer({
   locationRequest = 0,
   onCountsChange,
@@ -125,12 +156,14 @@ export default function MapExplorer({
   onLocationChange,
   searchLocation = null,
   radiusMiles = null,
+  filters = { activityType: "all", species: "", breed: "", timeRange: "any" },
 }: MapExplorerProps) {
   const [bounds, setBounds] = useState(
     "minLat=40.68&maxLat=40.76&minLng=-74.06&maxLng=-73.96",
   );
   const [reports, setReports] = useState<MapReport[]>([]);
   const [mapError, setMapError] = useState<string | null>(null);
+  const previousCountsRef = useRef<{ reports: number; spottings: number } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -143,13 +176,9 @@ export default function MapExplorer({
         }>;
       })
       .then((data) => {
+        const loadedReports = [...data.reports, ...data.spottings];
         setMapError(null);
-        setReports([...data.reports, ...data.spottings]);
-        onReportsChange?.([...data.reports, ...data.spottings]);
-        onCountsChange?.({
-          reports: data.reports.length,
-          spottings: data.spottings.length,
-        });
+        setReports(loadedReports);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -161,13 +190,32 @@ export default function MapExplorer({
     return () => controller.abort();
   }, [bounds, onCountsChange, onReportsChange]);
 
+  const filteredReports = reports.filter((report) =>
+    matchesMapFilters(report, filters, searchLocation, radiusMiles),
+  );
+
+  useEffect(() => {
+    const nextCounts = {
+      reports: filteredReports.filter((report) => report.type === "lost").length,
+      spottings: filteredReports.filter((report) => report.type === "spotted").length,
+    };
+
+    if (previousCountsRef.current?.reports !== nextCounts.reports ||
+        previousCountsRef.current?.spottings !== nextCounts.spottings) {
+      previousCountsRef.current = nextCounts;
+      onCountsChange?.(nextCounts);
+    }
+
+    onReportsChange?.(filteredReports);
+  }, [filteredReports, onCountsChange, onReportsChange]);
+
   return (
     <MapContainer
       center={[40.718, -74.009]}
       zoom={14}
       scrollWheelZoom
       zoomControl
-      className="maxfinder-map"
+      className="maxfinder-map dark-map"
       aria-label="Map showing nearby lost pets and community spottings"
     >
       <TileLayer
@@ -178,7 +226,6 @@ export default function MapExplorer({
       <CenterOnUser request={locationRequest} onLocationChange={onLocationChange} />
       <CenterOnSearch position={searchLocation} />
       <BoundsWatcher onChange={setBounds} />
-      <MapLocationSelector onLocationChange={onLocationChange} />
       {searchLocation && (
         <Marker
           position={searchLocation}
@@ -190,10 +237,10 @@ export default function MapExplorer({
           center={searchLocation}
           radius={radiusMiles * 1609.344}
           pathOptions={{
-            color: "#198d68",
-            fillColor: "#198d68",
-            fillOpacity: 0.08,
-            weight: 2,
+            color: "#62e0b0",
+            fillColor: "#35b487",
+            fillOpacity: 0.18,
+            weight: 3,
             dashArray: "6 6",
           }}
         />
@@ -203,7 +250,7 @@ export default function MapExplorer({
           {mapError}
         </div>
       )}
-      {reports.map((report) => (
+      {filteredReports.map((report) => (
         <CircleMarker
           key={report.id}
           center={report.position}

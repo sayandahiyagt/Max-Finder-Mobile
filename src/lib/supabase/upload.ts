@@ -23,6 +23,14 @@ export async function uploadImage(
     cacheControl: "3600",
     upsert: false,
   });
-  if (error) throw new Error("Image upload failed. Please try again.");
+  if (error) {
+    console.error("Supabase image upload failed.", {
+      bucket,
+      statusCode: error.statusCode,
+      name: error.name,
+      message: error.message,
+    });
+    throw new Error("Image upload failed. Please try again.");
+  }
   return { admin, path };
 }

@@ -55,7 +55,7 @@ node --version
 npm --version
 ```
 
-Then:
+Then configure the application to use the shared Supabase development project:
 
 ```bash
 npm ci
@@ -69,7 +69,8 @@ npm ci
 Copy-Item .env.example .env.local
 ```
 
-Populate `.env.local` only with authorized development values.
+Populate `.env.local` only with authorized shared development values. No local
+Supabase database service is required.
 
 ## Current environment variables
 
@@ -77,9 +78,14 @@ The repository currently declares:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ```
+
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and
+`SUPABASE_SERVICE_ROLE_KEY` must all belong to the shared development project
+when running the app in development. Production deployments use the
+corresponding values from the separate shared production project.
 
 The first Prisma-backed database task will also need a server-only PostgreSQL connection variable such as:
 
