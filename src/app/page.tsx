@@ -2,12 +2,11 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Eye, MapPin, PawPrint, Plus, Search, ShieldCheck } from "lucide-react";
+import { ChevronDown, Eye, MapPin, PawPrint, Plus, Search, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
 import { ReunionsCarousel } from "@/components/reunions-carousel";
-import type { MapReport } from "@/components/map-explorer";
 import styles from "./page.module.css";
 import { breedOptions } from "@/lib/breeds";
 
@@ -35,17 +34,20 @@ export default function Home() {
   >(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [activities, setActivities] = useState<MapReport[]>([]);
   const [activityType, setActivityType] = useState<"all" | "lost" | "spotted">("all");
   const [radius, setRadius] = useState("1");
   const [timeRange, setTimeRange] = useState("any");
   const [species, setSpecies] = useState("");
   const [breed, setBreed] = useState("");
-  const [filterNow] = useState(() => Date.now());
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const availableBreeds = species === "Dog" || species === "Cat" ? breedOptions[species] : [];
   const updateActivityCounts = useCallback(
     (counts: { reports: number; spottings: number }) =>
-      setActivityCounts(counts),
+      setActivityCounts((previous) =>
+        previous.reports === counts.reports && previous.spottings === counts.spottings
+          ? previous
+          : counts,
+      ),
     [],
   );
   useEffect(() => {
@@ -97,31 +99,6 @@ export default function Home() {
       setIsSearching(false);
     }
   };
-
-  const filteredActivities = activities.filter((activity) => {
-    if (activityType !== "all" && activity.type !== activityType) return false;
-    if (species && (activity.species ?? "").toLowerCase() !== species.toLowerCase()) return false;
-    if (breed && !(activity.breed ?? "").toLowerCase().includes(breed.toLowerCase())) return false;
-    if (timeRange !== "any") {
-      const days = Number(timeRange);
-      if (filterNow - new Date(activity.timestamp).getTime() > days * 86400000) return false;
-    }
-    if (radius !== "any" && searchLocation) {
-      const [lat, lng] = searchLocation;
-      const [activityLat, activityLng] = activity.position;
-      const earthRadius = 3959;
-      const latDelta = ((activityLat - lat) * Math.PI) / 180;
-      const lngDelta = ((activityLng - lng) * Math.PI) / 180;
-      const a =
-        Math.sin(latDelta / 2) ** 2 +
-        Math.cos((lat * Math.PI) / 180) *
-          Math.cos((activityLat * Math.PI) / 180) *
-          Math.sin(lngDelta / 2) ** 2;
-      const miles = earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      if (miles > Number(radius)) return false;
-    }
-    return true;
-  });
 
   return (
     <AppShell active="Explore">
@@ -240,31 +217,36 @@ export default function Home() {
         <div className={styles.mapFrame}>
           <MapExplorer
             onCountsChange={updateActivityCounts}
-            onReportsChange={setActivities}
             onLocationChange={setSearchLocation}
             searchLocation={searchLocation}
-            radiusMiles={Number(radius)}
+            radiusMiles={searchLocation ? Number(radius) : null}
+            filters={{ activityType, species, breed, timeRange }}
           />
           <div className={styles.mapLegend}>
             <span><i className={styles.lostDot} /> Lost pet</span>
             <span><i className={styles.spottedDot} /> Spotting</span>
           </div>
         </div>
-        <section className={styles.resultsSection} aria-label="Filter map activity">
-          <div className={styles.resultsHeading}>
-            <div>
-              <p className={styles.eyebrow}>Nearby activity</p>
-              <h2>Find the right match</h2>
+        <section className={styles.advancedFilters} aria-label="Advanced map filters">
+          <button
+            type="button"
+            className={styles.advancedFiltersToggle}
+            onClick={() => setShowAdvancedFilters((current) => !current)}
+            aria-expanded={showAdvancedFilters}
+          >
+            <span>Advanced filters</span>
+            <ChevronDown size={16} className={showAdvancedFilters ? styles.chevronOpen : undefined} />
+          </button>
+          {showAdvancedFilters && (
+            <div className={styles.advancedFiltersBody}>
+              <div className={styles.activityFilters}>
+                <label>Type<select value={activityType} onChange={(event) => setActivityType(event.target.value as typeof activityType)}><option value="all">All activity</option><option value="lost">Lost pets</option><option value="spotted">Spottings</option></select></label>
+                <label>Time<select value={timeRange} onChange={(event) => setTimeRange(event.target.value)}><option value="any">Any time</option><option value="1">Past 24 hours</option><option value="7">Past 7 days</option><option value="30">Past 30 days</option></select></label>
+                <label>Species<select value={species} onChange={(event) => { setSpecies(event.target.value); setBreed(""); }}><option value="">Any species</option><option value="Dog">Dog</option><option value="Cat">Cat</option></select></label>
+                <label>Breed<select value={breed} onChange={(event) => setBreed(event.target.value)} disabled={!species}><option value="">Any breed</option>{availableBreeds.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+              </div>
             </div>
-            <span className={styles.resultCount}>{filteredActivities.length} results</span>
-          </div>
-          <div className={styles.activityFilters}>
-            <label>Type<select value={activityType} onChange={(event) => setActivityType(event.target.value as typeof activityType)}><option value="all">All activity</option><option value="lost">Lost pets</option><option value="spotted">Spottings</option></select></label>
-            <label>Time<select value={timeRange} onChange={(event) => setTimeRange(event.target.value)}><option value="any">Any time</option><option value="1">Past 24 hours</option><option value="7">Past 7 days</option><option value="30">Past 30 days</option></select></label>
-            <label>Species<select value={species} onChange={(event) => { setSpecies(event.target.value); setBreed(""); }}><option value="">Any species</option><option value="Dog">Dog</option><option value="Cat">Cat</option></select></label>
-            <label>Breed<select value={breed} onChange={(event) => setBreed(event.target.value)} disabled={!species}><option value="">Any breed</option>{availableBreeds.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-          </div>
-          {filteredActivities.length ? <div className={styles.activityCards}>{filteredActivities.map((activity) => <Link className={styles.activityCard} key={`${activity.type}-${activity.id}`} href={activity.type === "spotted" ? `/spottings/${activity.id}` : `/lost-pets/reports/${activity.id}`}>{activity.imageUrl ? <img className={styles.activityCardImage} src={activity.imageUrl} alt="" /> : <div className={styles.activityCardImagePlaceholder}>No image</div>}<div className={styles.activityCardBody}><span className={`${styles.cardBadge} ${activity.type === "lost" ? styles.cardBadgeLost : styles.cardBadgeSpotted}`}>{activity.type === "lost" ? "Lost pet" : "Spotting"}</span><small>{activity.locationLabel ?? "Address unavailable"}</small><small>{activity.time}</small><strong>View details →</strong></div></Link>)}</div> : <div className={styles.noResults}>No activity matches these filters.</div>}
+          )}
         </section>
       </section>
 

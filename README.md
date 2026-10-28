@@ -3,9 +3,9 @@
 MaxFinder is a lost-pet reporting and community spotting application built with
 Next.js, Supabase, and Leaflet/OpenStreetMap.
 
-## Local setup
+## Development setup
 
-Install dependencies and create a local environment file:
+Install dependencies and create an environment file:
 
 ```powershell
 npm install
@@ -13,7 +13,7 @@ Copy-Item .env.example .env.local -ErrorAction SilentlyContinue
 npm run dev
 ```
 
-Populate `.env.local` with the authorized Supabase development values:
+Populate `.env.local` with the authorized shared Supabase development values:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
@@ -21,58 +21,14 @@ Populate `.env.local` with the authorized Supabase development values:
 
 Never commit that file or any service-role key.
 
-## Local development data
-
-After starting local Supabase and applying the repository migrations, run:
-
-```powershell
-npm run seed:dev
-```
-
-The command creates two passwordless development identities, two related pets, three lost-pet reports including two reunited pets, and two spottings. It uploads the bundled WebP images to deterministic paths and upserts fixed record IDs, so repeated runs do not create duplicates.
-
-The script accepts only `localhost`, `127.0.0.1`, or `::1` Supabase URLs. It refuses hosted and production projects and never deletes existing records.
-
 ## Supabase database workflow
 
 The repository migrations are in [`supabase/migrations`](./supabase/migrations).
-The local Supabase CLI uses Docker Desktop.
+Development and production use separate shared Supabase projects. The Next.js
+app connects to whichever project is selected by the environment variables; it
+does not require a database service running on the developer's machine.
 
-### Start the local database
-
-Run these commands once after installing the Supabase CLI:
-
-```powershell
-supabase init
-supabase start
-supabase db reset
-```
-
-`supabase db reset` recreates the local database from the repository migrations.
-It is appropriate for local development only and removes local database data.
-
-Check local service status or stop the local services with:
-
-```powershell
-supabase status
-supabase stop
-```
-
-### Apply database changes locally
-
-After adding or changing a migration:
-
-```powershell
-supabase db reset
-```
-
-To preview the migration plan without applying it:
-
-```powershell
-supabase db push --local --dry-run
-```
-
-### Apply migrations to Supabase development
+### Apply migrations to shared Supabase development
 
 Link the CLI to the shared development project, then push the migrations:
 
@@ -82,7 +38,7 @@ supabase db push --linked
 supabase migration list --linked
 ```
 
-### Apply migrations to Supabase production
+### Apply migrations to shared Supabase production
 
 Production migrations must be reviewed and tested against development first:
 
@@ -94,7 +50,7 @@ supabase migration list --linked
 ```
 
 The CLI is linked to one Supabase project at a time. Re-run `supabase link`
-before switching between development and production.
+before switching between the shared development and production projects.
 
 ## Vercel deployment workflow
 
