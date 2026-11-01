@@ -4,6 +4,8 @@ import { useActionState } from "react";
 
 import { updateProfile, type ProfileActionState } from "@/app/profile/actions";
 
+import styles from "./account-form.module.css";
+
 const initialProfileActionState = {
   kind: "idle",
   message: "",
@@ -16,7 +18,7 @@ export function ProfileForm({ displayName }: { displayName: string }) {
   );
 
   return (
-    <form action={formAction} className="auth-form">
+    <form action={formAction} className={styles.form}>
       <label>
         Display name
         <input
@@ -28,7 +30,7 @@ export function ProfileForm({ displayName }: { displayName: string }) {
       </label>
       {state.message && (
         <p
-          className={state.kind === "success" ? "notice" : "auth-error"}
+          className={state.kind === "success" ? "notice" : "form-error"}
           role="status"
           aria-live="polite"
         >

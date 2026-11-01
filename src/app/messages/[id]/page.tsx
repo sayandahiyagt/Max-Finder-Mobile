@@ -1,20 +1,79 @@
 import { notFound } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { sendMessage } from "@/app/messages/actions";
-import { requireUser } from "@/lib/supabase/auth";
+import { AppShell } from "@/components/app-shell";
+import { getConversationThread } from "@/features/communication/application";
+import { requireUser } from "@/lib/auth";
 
-export default async function MessageThreadPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MessageThreadPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ send?: string }>;
+}) {
   const { id } = await params;
-  const { supabase, user } = await requireUser();
-  const { data: conversation } = await supabase.from("conversations").select("id, lost_pet_report_id, report_id, owner_id, participant_id").eq("id", id).maybeSingle();
-  if (!conversation || (conversation.owner_id !== user.id && conversation.participant_id !== user.id)) notFound();
-  const otherUserId = conversation.owner_id === user.id ? conversation.participant_id : conversation.owner_id;
-  const { data: otherProfile } = await supabase.from("profiles").select("display_name").eq("id", otherUserId).maybeSingle();
-  const reportId = conversation.lost_pet_report_id ?? conversation.report_id;
-  const { data: report } = reportId
-    ? await supabase.from("lost_pet_reports").select("pet_name, species, breed, location_label").eq("id", reportId).maybeSingle()
-    : { data: null };
-  const { data: messages } = await supabase.from("messages").select("id, sender_id, content, body, created_at").eq("conversation_id", id).order("created_at");
-  return <AppShell active="Messages"><main className="app-main"><div className="message-layout"><section className="thread"><div className="thread-header"><strong>{report?.pet_name ?? "Lost pet"} · with {otherProfile?.display_name || "MaxFinder user"}</strong>{report && <span className="muted">{report.species} · {report.breed} · Last seen near {report.location_label}</span>}</div><div className="thread-messages">{messages?.length ? messages.map((message) => <div className={`bubble ${message.sender_id === user.id ? "sent" : "received"}`} key={message.id}>{message.content ?? message.body}</div>) : <p className="muted">Start the conversation with a helpful, respectful message.</p>}</div><form action={sendMessage} className="message-form"><input type="hidden" name="conversationId" value={id} /><input name="content" required maxLength={2000} placeholder="Write a message…" /><button type="submit">Send</button></form></section></div></main></AppShell>;
+  const { send } = await searchParams;
+  const { actor } = await requireUser();
+  const conversation = await getConversationThread({
+    conversationId: id,
+    userId: actor.userId,
+  });
+  if (!conversation) notFound();
+
+  return (
+    <AppShell active="Messages">
+      <main className="app-main">
+        <div className="message-layout">
+          <section className="thread">
+            <div className="thread-header">
+              <strong>
+                {conversation.report.petName ?? "Lost pet"} · with{" "}
+                {conversation.otherDisplayName}
+              </strong>
+              <span className="muted">
+                {conversation.report.species} · {conversation.report.breed} ·
+                Last seen near {conversation.report.locationLabel}
+              </span>
+            </div>
+            <div className="thread-messages">
+              {conversation.messages.length ? (
+                conversation.messages.map((message) => (
+                  <div
+                    className={`bubble ${message.senderId === actor.userId ? "sent" : "received"}`}
+                    key={message.id}
+                  >
+                    {message.text}
+                  </div>
+                ))
+              ) : (
+                <p className="muted">
+                  Start the conversation with a helpful, respectful message.
+                </p>
+              )}
+            </div>
+            {send === "unavailable" && conversation.report.status === "LOST" && (
+              <p role="status">Message could not be sent. Please try again.</p>
+            )}
+            {conversation.report.status === "LOST" ? (
+              <form action={sendMessage} className="message-form">
+                <input type="hidden" name="conversationId" value={id} />
+                <input
+                  name="content"
+                  required
+                  maxLength={2000}
+                  placeholder="Write a message…"
+                />
+                <button type="submit">Send</button>
+              </form>
+            ) : (
+              <p role="status">
+                This report is resolved. This conversation is read-only.
+              </p>
+            )}
+          </section>
+        </div>
+      </main>
+    </AppShell>
+  );
 }

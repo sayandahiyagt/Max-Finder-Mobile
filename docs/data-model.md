@@ -46,6 +46,8 @@ Private registered Pet Profiles.
 
 A user owns zero or more pets. Pet Profile access is owner-restricted except for the subset of pet information intentionally exposed through an active Lost Pet Report.
 
+The current Pet Profile form also requires and persists an integer `age` from 0 to 200, in addition to the optional `date_of_birth` above. `age` is a shipped feature-preservation extension not listed in the original ERD; keep it until the team reviews a product and data migration change.
+
 ## `pet_images`
 
 Stores the Supabase Storage reference for the current Pet Profile image.
@@ -61,6 +63,27 @@ Stores the Supabase Storage reference for the current Pet Profile image.
 `pet_id` is unique, so a pet has at most one current profile image in Version 1.
 
 Lost Pet Reports reuse this image through their pet relationship. There is no `report_images` table.
+
+## Current shipped feature extension: `spottings`
+
+The original ERD does not include Spottings. This table records the current anonymous Spotting feature so refactoring work does not remove its data or public map/detail behavior. It is not a claim that the original ERD was updated or that future lifecycle and retention policy has been approved.
+
+| Field | Type | Rules |
+| --- | --- | --- |
+| `id` | UUID | Primary key |
+| `species` | TEXT | Nullable; `Dog` or `Cat` when supplied |
+| `breed` | TEXT | Nullable; at most 100 characters |
+| `weight_range` | TEXT | Nullable; one of the supported weight ranges when supplied |
+| `description` | TEXT | Nullable; at most 2,000 characters |
+| `distinguishing_characteristics` | TEXT | Nullable; at most 2,000 characters |
+| `spotted_at` | TIMESTAMPTZ | Required |
+| `latitude` | DECIMAL(9,6) | Required; between -90 and 90 |
+| `longitude` | DECIMAL(9,6) | Required; between -180 and 180 |
+| `location_label` | TEXT | Required; 1 to 255 characters |
+| `image_path` | TEXT | Required; references an object in the `spotting-images` bucket |
+| `created_at` | TIMESTAMPTZ | Required |
+
+Spottings have no application-user owner because the current submission flow is anonymous. Public Spotting details and map pins expose only the fields used by that feature; they do not expose account or contact data. The current schema has no user deletion relationship for this table.
 
 ## `lost_pet_reports`
 
@@ -91,6 +114,8 @@ Rules:
 - `REMOVED` is a lifecycle state. It is not the same operation as physical row deletion.
 - Normal user create/change operations require ownership of the associated pet.
 - Report contact data is report-level data; account contact data does not automatically become report-visible.
+
+The current shipped forms use these weight values for reports and optional Spotting details: `Under 10 lbs`, `10–25 lbs`, `26–50 lbs`, `51–75 lbs`, `Over 75 lbs`, and `Unknown`. Keep the list in one code source at `src/lib/pet-options.ts`.
 
 ## `conversations`
 
@@ -161,6 +186,7 @@ users 1 ------- * conversations as user_2
 users 1 ------- * messages as sender
 
 third_party_organizations are independent directory records
+spottings are anonymous observations without an application-user relationship
 ```
 
 ## Delete behavior
@@ -183,4 +209,4 @@ Physical deletion must respect these relationships and the retention rules in `s
 
 The database schema does not replace domain authorization.
 
-Primary checks occur in the application/domain component that owns the resource. Supabase RLS is defense in depth. Tests must prove that a different authenticated user cannot modify another user's private Pet Profile, report, or conversation.
+Primary checks occur in the application/domain component that owns the resource. Supabase RLS is defense in depth only when the connected role and request identity actually apply the policies. A direct Prisma connection does not automatically carry the request's Supabase JWT, and roles with `BYPASSRLS` bypass policies. Verify the connection role and identity contract before relying on RLS for Prisma queries. Tests must prove that a different authenticated user cannot modify another user's private Pet Profile, report, or conversation.

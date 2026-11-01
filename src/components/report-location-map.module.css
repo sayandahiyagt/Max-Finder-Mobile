@@ -1,0 +1,48 @@
+.map {
+  overflow: hidden;
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.heading {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+}
+
+.heading strong {
+  color: #d3e2dc;
+  font-size: 12px;
+}
+
+.heading span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.canvas {
+  height: 200px;
+}
+
+.marker {
+  border: 2px solid #e8fff5;
+  border-radius: 50% 50% 50% 0;
+  background: #35b487;
+  box-shadow:
+    0 0 0 2px rgba(17, 26, 24, 0.75),
+    0 2px 6px rgba(0, 0, 0, 0.65);
+  transform: rotate(-45deg);
+}
+
+@media (max-width: 760px) {
+  .map {
+    margin-top: 16px;
+  }
+
+  .canvas {
+    height: 180px;
+  }
+}

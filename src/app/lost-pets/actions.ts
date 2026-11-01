@@ -2,138 +2,231 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { randomUUID } from "node:crypto";
-
-import { requireUser } from "@/lib/supabase/auth";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { uploadImage } from "@/lib/supabase/upload";
+import {
+  createReportForOwnedPet,
+  removeLostPetReport,
+  updateLostPetReport,
+} from "@/features/lost-pets/application";
+import { requireUser } from "@/lib/auth";
 import { reverseGeocode } from "@/lib/geocoding";
+import { parseCoordinates } from "@/lib/coordinates";
+import { parseLocalDateTime } from "@/lib/local-date-time";
+import { isPlaceholderLocationLabel } from "@/lib/location-contract";
+import { isWeightRange } from "@/lib/pet-options";
+import {
+  isEditableReportStatus,
+  isReportContactMethod,
+} from "@/features/lost-pets/types";
+import {
+  captureTextFields,
+  FormFieldError,
+  readTextField,
+} from "@/lib/form-data";
+import { LostPetReportValidationError } from "@/features/lost-pets/errors";
+import type {
+  LostPetReportActionState,
+  LostPetReportRemovalActionState,
+  LostPetReportUpdateActionState,
+} from "@/features/lost-pets/form-state";
 
-const allowedWeights = ["Under 10 lbs", "10–25 lbs", "26–50 lbs", "51–75 lbs", "Over 75 lbs", "Unknown"];
-
-function text(formData: FormData, name: string, max = 2000) {
-  const value = String(formData.get(name) ?? "").trim();
-  if (!value || value.length > max) throw new Error(`Invalid ${name}.`);
+function requiredText(formData: FormData, name: string, max = 2000) {
+  const value = readTextField(formData, name, max);
+  if (!value) throw new FormFieldError(`Invalid ${name}.`);
   return value;
 }
 
-export async function createLostPet(formData: FormData) {
-  const { user } = await requireUser();
-  const admin = createSupabaseAdminClient();
-  const petName = text(formData, "petName", 100);
-  const species = text(formData, "species", 20);
-  const breed = text(formData, "breed", 100);
-  const weightRange = text(formData, "weightRange", 30);
-  const description = text(formData, "description");
-  let locationLabel = text(formData, "locationLabel", 255);
-  const latitude = Number(formData.get("latitude"));
-  const longitude = Number(formData.get("longitude"));
-  const lastSeenAt = String(formData.get("lastSeenAt") ?? "");
-  if (!["Dog", "Cat"].includes(species) || !allowedWeights.includes(weightRange) ||
-      !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
-      !lastSeenAt || Number.isNaN(new Date(lastSeenAt).getTime())) {
-    throw new Error("Please complete every report field.");
-  }
-  if (/^(?:your )?current location$|^selected map location$|^finding address…?$|^address unavailable$/i.test(locationLabel)) {
-    const geocodedLocation = await reverseGeocode(latitude, longitude);
-    if (!geocodedLocation) {
-      throw new Error("Could not determine an address for this report location.");
+function submittedValues(formData: FormData) {
+  return captureTextFields(formData, {
+    petId: 80,
+    weightRange: 30,
+    lastSeenAt: 16,
+    lastSeenAtTimezoneOffset: 4,
+    contactMethod: 20,
+    contactValue: 255,
+    contactInstructions: 2000,
+    description: 2000,
+    locationLabel: 255,
+    latitude: 40,
+    longitude: 40,
+  });
+}
+
+function failedReportState(
+  previousState: LostPetReportActionState,
+  formData: FormData,
+  error: unknown,
+): LostPetReportActionState {
+  const message =
+    error instanceof LostPetReportValidationError
+      ? error.message
+      : error instanceof FormFieldError
+        ? "Check the form fields and try again."
+        : "Report could not be published. Please try again.";
+  return {
+    kind: "error",
+    message,
+    values: submittedValues(formData),
+    submission: previousState.submission + 1,
+  };
+}
+
+export async function createLostPetReport(
+  previousState: LostPetReportActionState,
+  formData: FormData,
+): Promise<LostPetReportActionState> {
+  const { actor } = await requireUser();
+  let reportId: string;
+  try {
+    const petId = requiredText(formData, "petId", 80);
+    const weightRange = requiredText(formData, "weightRange", 30);
+    const description = requiredText(formData, "description");
+    const contactMethod = requiredText(
+      formData,
+      "contactMethod",
+      20,
+    ).toLowerCase();
+    const contactValue = readTextField(formData, "contactValue", 255);
+    const contactInstructions = readTextField(
+      formData,
+      "contactInstructions",
+    );
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactValue);
+    const phoneDigits = contactValue.match(/\d/g)?.length ?? 0;
+    const validPhone =
+      /^\+?[\d\s().-]+$/.test(contactValue) &&
+      phoneDigits >= 7 &&
+      phoneDigits <= 15;
+    let locationLabel = requiredText(formData, "locationLabel", 255);
+    const coordinates = parseCoordinates(
+      formData.get("latitude"),
+      formData.get("longitude"),
+    );
+    const lastSeenAt = parseLocalDateTime(
+      formData.get("lastSeenAt"),
+      formData.get("lastSeenAtTimezoneOffset"),
+    );
+    if (
+      !isWeightRange(weightRange) ||
+      !isReportContactMethod(contactMethod) ||
+      (contactMethod === "email" && !validEmail) ||
+      (contactMethod === "phone" && !validPhone) ||
+      contactInstructions.length > 2000 ||
+      !coordinates ||
+      !lastSeenAt
+    ) {
+      throw new LostPetReportValidationError(
+        "Please complete every report field.",
+      );
     }
-    locationLabel = geocodedLocation;
-  }
-  const { error: profileError } = await admin.from("profiles").upsert(
-    { id: user.id },
-    { onConflict: "id", ignoreDuplicates: true },
-  );
-  if (profileError) {
-    console.error("Could not ensure lost-pet report profile:", profileError);
-    throw new Error("Could not prepare your account for this report.");
-  }
-  const { path: imagePath } = await uploadImage(
-    formData.get("image"),
-    "lost-pet-images",
-    user.id,
-  );
-  const { error: petsTableError } = await admin.from("pets").select("id").limit(1);
-  const usesLegacySchema = !petsTableError ||
-    !["42P01", "PGRST205"].includes(petsTableError.code ?? "");
-  let petId: string | null = null;
-  if (usesLegacySchema) {
-    petId = randomUUID();
-    const legacySize =
-      weightRange === "Under 10 lbs"
-        ? "small"
-        : weightRange === "Over 75 lbs"
-          ? "large"
-          : "medium";
-    const { error: petError } = await admin.from("pets").insert({
-      id: petId,
-      owner_id: user.id,
-      name: petName,
-      species: species.toLowerCase(),
-      breed,
-      color: "Unknown",
-      size: legacySize,
-      age: 0,
-      image_path: imagePath,
+    if (isPlaceholderLocationLabel(locationLabel)) {
+      const geocodedLocation = await reverseGeocode(
+        coordinates.latitude,
+        coordinates.longitude,
+      );
+      if (!geocodedLocation) {
+        throw new LostPetReportValidationError(
+          "Could not determine an address for this report location.",
+        );
+      }
+      locationLabel = geocodedLocation;
+    }
+    const report = await createReportForOwnedPet({
+      petId,
+      ownerId: actor.userId,
+      report: {
+        weightRange,
+        description,
+        lastSeenAt,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        locationLabel,
+        contactMethod,
+        contactValue: contactMethod === "in_app" ? null : contactValue,
+        contactInstructions: contactInstructions || null,
+      },
     });
-    if (petError) {
-      console.error("Could not create lost-pet profile:", petError);
-      await admin.storage.from("lost-pet-images").remove([imagePath]);
-      throw new Error("Could not prepare the lost-pet report.");
-    }
-  }
-  let reportData: { id: string } | null = null;
-  let reportErrorMessage: string | null = null;
-  if (usesLegacySchema) {
-    const { data, error } = await admin.from("lost_pet_reports").insert({
-      owner_id: user.id, pet_id: petId, pet_name: petName, species, breed, weight_range: weightRange,
-      description, last_seen_at: new Date(lastSeenAt).toISOString(), latitude, longitude,
-      location_label: locationLabel, last_seen_location: locationLabel,
-      contact_method: "email", contact_value: user.email ?? "",
-      image_path: imagePath, status: "LOST",
-    }).select("id").single();
-    reportData = data;
-    reportErrorMessage = error?.message ?? null;
-  } else {
-    const { data, error } = await admin.from("lost_pet_reports").insert({
-      owner_id: user.id, pet_name: petName, species, breed, weight_range: weightRange,
-      description, last_seen_at: new Date(lastSeenAt).toISOString(), latitude, longitude,
-      location_label: locationLabel, image_path: imagePath, status: "LOST",
-    }).select("id").single();
-    reportData = data;
-    reportErrorMessage = error?.message ?? null;
-  }
-  if (reportErrorMessage || !reportData) {
-    console.error("Could not create lost-pet report:", reportErrorMessage);
-    if (petId) await admin.from("pets").delete().eq("id", petId);
-    await admin.storage.from("lost-pet-images").remove([imagePath]);
-    throw new Error("Could not create the lost-pet report.");
+    reportId = report.id;
+  } catch (error) {
+    return failedReportState(previousState, formData, error);
   }
   revalidatePath("/");
   revalidatePath("/lost-pets");
-  redirect(`/lost-pets/reports/${reportData.id}`);
+  redirect(`/lost-pets/reports/${reportId}`);
 }
 
-export async function updateLostPet(formData: FormData) {
-  const { supabase, user } = await requireUser();
-  const id = text(formData, "id", 80);
-  const status = text(formData, "status", 10);
-  const description = text(formData, "description");
-  const { error } = await supabase.from("lost_pet_reports").update({
-    description, status: status === "FOUND" ? "FOUND" : "LOST", updated_at: new Date().toISOString(),
-  }).eq("id", id).eq("owner_id", user.id);
-  if (error) throw new Error("Could not update this report.");
+function submittedUpdateValues(formData: FormData) {
+  return captureTextFields(formData, {
+    id: 80,
+    status: 10,
+    description: 2000,
+  });
+}
+
+function failedUpdateState(
+  previousState: LostPetReportUpdateActionState,
+  formData: FormData,
+  error: unknown,
+): LostPetReportUpdateActionState {
+  const message =
+    error instanceof LostPetReportValidationError
+      ? error.message
+      : error instanceof FormFieldError
+        ? "Check the report fields and try again."
+        : "Report could not be updated. Please try again.";
+  return {
+    kind: "error",
+    message,
+    values: submittedUpdateValues(formData),
+    submission: previousState.submission + 1,
+  };
+}
+
+export async function updateLostPet(
+  previousState: LostPetReportUpdateActionState,
+  formData: FormData,
+): Promise<LostPetReportUpdateActionState> {
+  const { actor } = await requireUser();
+  let id: string;
+  try {
+    id = requiredText(formData, "id", 80);
+    const status = requiredText(formData, "status", 10);
+    const description = requiredText(formData, "description");
+    if (!isEditableReportStatus(status)) {
+      throw new LostPetReportValidationError("Choose Lost or Found.");
+    }
+    const updated = await updateLostPetReport({
+      reportId: id,
+      ownerId: actor.userId,
+      changes: { description, status },
+    });
+    if (!updated) throw new Error("Report update did not affect a row.");
+  } catch (error) {
+    return failedUpdateState(previousState, formData, error);
+  }
   revalidatePath("/");
   revalidatePath("/lost-pets");
   redirect(`/lost-pets/reports/${id}`);
 }
 
-export async function deleteLostPet(formData: FormData) {
-  const { supabase, user } = await requireUser();
-  const id = text(formData, "id", 80);
-  const { error } = await supabase.from("lost_pet_reports").delete().eq("id", id).eq("owner_id", user.id);
-  if (error) throw new Error("Could not delete this report.");
+export async function deleteLostPet(
+  previousState: LostPetReportRemovalActionState,
+  formData: FormData,
+): Promise<LostPetReportRemovalActionState> {
+  const { actor } = await requireUser();
+  try {
+    const id = requiredText(formData, "id", 80);
+    const removed = await removeLostPetReport({
+      reportId: id,
+      ownerId: actor.userId,
+    });
+    if (!removed) throw new Error("Report removal did not affect a row.");
+  } catch {
+    return {
+      kind: "error",
+      message: "Report could not be removed. Refresh and try again.",
+      submission: previousState.submission + 1,
+    };
+  }
   revalidatePath("/");
-  redirect("/lost-pets");
+  redirect("/profile");
 }

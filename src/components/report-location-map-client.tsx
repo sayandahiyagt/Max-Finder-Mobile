@@ -4,8 +4,10 @@ import L from "leaflet";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
+import styles from "./report-location-map.module.css";
+
 const reportLocationIcon = L.divIcon({
-  className: "report-location-marker",
+  className: styles.marker,
   html: "",
   iconSize: [14, 14],
   iconAnchor: [7, 7],
@@ -23,12 +25,12 @@ export function ReportLocationMapClient({
   const position: [number, number] = [latitude, longitude];
 
   return (
-    <section className="report-location-map" aria-label="Report location">
-      <div className="report-location-map-heading">
+    <section className={styles.map} aria-label="Report location">
+      <div className={styles.heading}>
         <strong>Approximate location</strong>
         <span>{label}</span>
       </div>
-      <div className="report-location-map-canvas">
+      <div className={styles.canvas}>
         <MapContainer
           center={position}
           zoom={14}

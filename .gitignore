@@ -18,6 +18,9 @@
 
 # next.js
 /.next/
+/.next-dev/
+/.next-cloud/
+/.next-cloud-dev/
 /out/
 
 # production
@@ -33,9 +36,6 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env.local
-
 # vercel
 .vercel
 
@@ -43,3 +43,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*
+!.env.example
+supabase/.temp/
+/.supabase/

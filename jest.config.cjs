@@ -5,6 +5,8 @@ module.exports = {
   roots: ["<rootDir>/tests", "<rootDir>/src"],
   testPathIgnorePatterns: ["/node_modules/", "/.next/"],
   moduleNameMapper: {
+    "^.+\\.module\\.css$": "<rootDir>/tests/mocks/css-module.ts",
+    "^server-only$": "<rootDir>/tests/mocks/server-only.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {

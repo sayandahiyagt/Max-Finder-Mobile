@@ -84,7 +84,9 @@
   border-radius: 11px;
   background: #1a2824;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
   height: 100%;
   text-decoration: none;
   color: inherit;
@@ -164,7 +166,10 @@
   color: #d3e2dc;
   cursor: pointer;
   transform: translateY(-50%);
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .reunionControlBtnPrev {

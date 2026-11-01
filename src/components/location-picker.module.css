@@ -1,0 +1,95 @@
+.picker {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+}
+
+.heading strong,
+.heading span {
+  display: block;
+}
+
+.heading strong {
+  color: #d3e2dc;
+  font-size: 12px;
+}
+
+.heading span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.heading .status {
+  flex-shrink: 0;
+  margin: 0;
+  color: #198d68;
+  font-weight: 700;
+}
+
+.picker > :global(.secondary-button) {
+  margin: 0 14px 12px;
+}
+
+.picker .error {
+  margin: 0 14px 12px;
+  padding: 9px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.map {
+  height: 260px;
+}
+
+.marker {
+  display: grid;
+  place-items: center;
+  border: 3px solid #e8fff5;
+  border-radius: 50%;
+  background: #35b487;
+  box-shadow:
+    0 0 0 2px rgba(17, 26, 24, 0.75),
+    0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+.marker span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: white;
+}
+
+.values {
+  padding: 12px 14px 14px;
+}
+
+.values label {
+  display: grid;
+  gap: 7px;
+  color: #b7c9c1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.values input:not([type="hidden"]) {
+  width: 100%;
+  height: 39px;
+  margin-top: 0;
+  border: 1px solid #385247;
+  border-radius: 8px;
+  padding: 0 10px;
+  color: #e4eee9;
+  background: var(--input);
+  font-size: 13px;
+}

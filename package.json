@@ -2,22 +2,49 @@
   "name": "max-finder-mobile",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "cloud:configure": "node scripts/configure-cloud-development.mjs",
+    "dev:cloud": "node scripts/run-cloud-development.mjs dev",
+    "build:cloud": "node scripts/run-cloud-development.mjs build",
+    "start:cloud": "node scripts/run-cloud-development.mjs start",
+    "db:dev:migrations": "node scripts/cloud-development.mjs migrations",
+    "db:dev:plan": "node scripts/cloud-development.mjs plan",
+    "db:dev:media": "node scripts/migrate-cloud-development-pet-images.mjs",
     "lint": "eslint",
+    "lint:boundaries": "node scripts/probe-module-boundaries.mjs",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:db": "node scripts/test-local-database.mjs",
+    "test:migration-upgrade": "node scripts/test-migration-upgrade.mjs",
+    "smoke:local-auth": "node scripts/smoke-local-auth.mjs",
+    "db:start": "node scripts/local-supabase.mjs start",
+    "db:reset": "node scripts/local-supabase.mjs db reset --local --yes",
+    "db:status": "node scripts/local-supabase.mjs status",
+    "db:migrations": "node scripts/local-supabase.mjs migration list --local",
+    "db:stop": "node scripts/local-supabase.mjs stop",
+    "db:configure": "node scripts/configure-local-supabase.mjs",
+    "db:media-audit": "node scripts/audit-local-media.mjs",
+    "db:prisma:validate": "prisma validate",
+    "db:prisma:generate": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "embla-carousel-react": "^8.6.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.57.0",
-    "next": "16.3.8",
+    "next": "^16.4.3",
+    "pg": "^8.23.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-leaflet": "^5.0.0"
@@ -25,18 +52,27 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/leaflet": "^1.9.22",
-    "@types/node": "^20",
+    "@types/node": "^24",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "^16.4.3",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
+    "prisma": "^7.10.1",
+    "supabase": "^2.122.0",
     "ts-jest": "^29.4.14",
     "typescript": "^5"
   },
   "allowScripts": {
     "@parcel/watcher@2.6.0": true,
+    "@prisma/engines@7.10.1": true,
+    "prisma@7.10.1": true,
     "unrs-resolver@1.12.2": true
+  },
+  "overrides": {
+    "glob": "^14.0.3",
+    "minimatch": "^11.0.3"
   }
 }

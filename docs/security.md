@@ -6,7 +6,7 @@ Supabase Auth is the credential and session authority.
 
 Max Finder application tables must not store plaintext passwords or application-managed password hashes. The application should treat the provider identity as trusted only after Supabase Auth has validated the session.
 
-Authentication is required before protected application behavior such as Pet Profile management, Lost Pet Report management, search/filtering, messaging, and administration.
+Authentication is required before protected application behavior such as Pet Profile management, Lost Pet Report management, full report search, messaging, and administration. Preserve the existing public map browsing and its activity/species/breed/time/radius filters, Lost Pet Report detail, and Spotting detail flows. Anonymous responses may contain only approved recovery information and must omit contact choices and private account data.
 
 ## Authorization
 
@@ -19,7 +19,7 @@ Examples:
 - Communication verifies that the caller is one of the two conversation participants.
 - Administration verifies `users.role = ADMIN`.
 
-Supabase RLS is a second database-level safeguard. It does not replace application/domain authorization.
+Supabase RLS can provide a second database-level safeguard when the database role and request identity used by the query cause the policies to run as intended. A direct Prisma connection does not automatically inherit the caller's Supabase JWT; owner and `BYPASSRLS` roles can bypass policies. The application must enforce authorization regardless, and the chosen Prisma role/RLS contract must be verified before hosted use. RLS does not replace application/domain authorization.
 
 Client-side visibility is never sufficient authorization.
 
@@ -69,7 +69,7 @@ Do not treat the current device location as the pet's last-known location.
 
 If device location is denied or unavailable, the user must be able to enter a location manually.
 
-The exact precision displayed to users is not fixed by Version 1. Do not expose more precision than the feature requires.
+Public recovery map and report-detail pins preserve the exact stored coordinates for Lost Pet Reports and Spottings. Do not add rounding to those pins during refactoring. Keep coordinates limited to the existing recovery map/detail projections; do not add them to unrelated public responses.
 
 ## Pet image handling
 
@@ -85,6 +85,8 @@ Before storage:
 Supabase Storage access control must prevent unauthorized modification or retrieval of protected media.
 
 Lost Pet Reports reuse the Pet Profile image and do not create separate report-specific storage state.
+
+Pet Profile images use private storage and signed display access. Spotting images are publicly readable to support the existing anonymous Spotting detail and map flows. Keep Spotting uploads separate from private Pet Profile media and do not associate them with contributor account or contact data.
 
 ## Conversation privacy
 

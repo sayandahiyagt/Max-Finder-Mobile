@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public"]
+}
+
+model User {
+  userId              String         @id @default(dbgenerated("gen_random_uuid()")) @map("user_id") @db.Uuid
+  authProviderId      String         @unique @map("auth_provider_id") @db.Uuid
+  email               String         @unique @db.VarChar(255)
+  displayName         String         @map("display_name") @db.VarChar(100)
+  role                String         @default("USER") @db.VarChar(20)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  pets                Pet[]          @relation("PetOwner")
+  firstConversations  Conversation[] @relation("ConversationUser1")
+  secondConversations Conversation[] @relation("ConversationUser2")
+  sentMessages        Message[]      @relation("MessageSender")
+
+  @@map("users")
+  @@schema("public")
+}
+
+model Pet {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @map("pet_id") @db.Uuid
+  ownerId      String          @map("owner_id") @db.Uuid
+  name         String          @db.Text
+  species      String          @db.Text
+  breed        String?         @db.Text
+  color        String          @db.Text
+  size         String          @db.Text
+  age          Int
+  description  String?         @db.Text
+  dateOfBirth  DateTime?       @map("date_of_birth") @db.Date
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner        User            @relation("PetOwner", fields: [ownerId], references: [userId], onDelete: Cascade)
+  reports      LostPetReport[]
+  profileImage PetImage?
+
+  @@map("pets")
+  @@schema("public")
+}
+
+model PetImage {
+  imageId     String   @id @default(dbgenerated("gen_random_uuid()")) @map("image_id") @db.Uuid
+  petId       String   @unique @map("pet_id") @db.Uuid
+  storagePath String   @unique @map("storage_path") @db.Text
+  caption     String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  pet         Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@map("pet_images")
+  @@schema("public")
+}
+
+model LostPetReport {
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @map("report_id") @db.Uuid
+  petId               String         @map("pet_id") @db.Uuid
+  status              String         @default("LOST") @db.Text
+  lastSeenAt          DateTime       @map("last_seen_at") @db.Timestamptz(6)
+  contactMethod       String         @map("contact_method") @db.Text
+  contactValue        String?        @map("contact_value") @db.Text
+  contactInstructions String?        @map("contact_instructions") @db.Text
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  latitude            Float          @map("last_seen_lat")
+  longitude           Float          @map("last_seen_lng")
+  weightRange         String?        @map("weight_range") @db.Text
+  description         String?        @db.Text
+  locationLabel       String         @map("last_seen_address") @db.VarChar(255)
+  pet                 Pet            @relation(fields: [petId], references: [id], onDelete: Restrict)
+  conversations       Conversation[]
+
+  @@index([status, latitude, longitude], map: "lost_pet_reports_map_idx")
+  @@map("lost_pet_reports")
+  @@schema("public")
+}
+
+model Conversation {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @map("conversation_id") @db.Uuid
+  reportId  String        @map("report_id") @db.Uuid
+  user1Id   String        @map("user_1_id") @db.Uuid
+  user2Id   String        @map("user_2_id") @db.Uuid
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user1     User          @relation("ConversationUser1", fields: [user1Id], references: [userId], onDelete: Cascade)
+  user2     User          @relation("ConversationUser2", fields: [user2Id], references: [userId], onDelete: Cascade)
+  report    LostPetReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([reportId, user1Id, user2Id])
+  @@map("conversations")
+  @@schema("public")
+}
+
+model Message {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @map("message_id") @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  senderId       String       @map("sender_id") @db.Uuid
+  content        String       @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  readAt         DateTime?    @map("read_at") @db.Timestamptz(6)
+  sender         User         @relation("MessageSender", fields: [senderId], references: [userId], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt], map: "messages_conversation_created_at_idx")
+  @@map("messages")
+  @@schema("public")
+}
+
+model Spotting {
+  id                            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  species                       String?  @db.Text
+  breed                         String?  @db.Text
+  weightRange                   String?  @map("weight_range") @db.Text
+  description                   String?  @db.Text
+  distinguishingCharacteristics String?  @map("distinguishing_characteristics") @db.Text
+  spottedAt                     DateTime @map("spotted_at") @db.Timestamptz(6)
+  latitude                      Decimal  @db.Decimal(9, 6)
+  longitude                     Decimal  @db.Decimal(9, 6)
+  locationLabel                 String   @map("location_label") @db.Text
+  imagePath                     String   @map("image_path") @db.Text
+  createdAt                     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([latitude, longitude], map: "spottings_map_idx")
+  @@map("spottings")
+  @@schema("public")
+}

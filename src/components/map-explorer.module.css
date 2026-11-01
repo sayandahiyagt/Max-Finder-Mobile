@@ -1,0 +1,9 @@
+.searchLocationMarker {
+  border: 2px solid #e8fff5;
+  border-radius: 50% 50% 50% 0;
+  background: #35b487;
+  box-shadow:
+    0 0 0 2px rgba(17, 26, 24, 0.75),
+    0 2px 6px rgba(0, 0, 0, 0.65);
+  transform: rotate(-45deg);
+}

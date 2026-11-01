@@ -25,14 +25,17 @@ These flows describe functional behavior, not final visual styling.
 
 1. The owner selects an existing registered pet.
 2. The owner creates a Lost Pet Report.
-3. The report records the pet's last-seen time and location, description, and report-level contact choice.
-4. The report begins in `LOST` status.
-5. Search can now include the approved report fields for authenticated users.
-6. The report reuses the Pet Profile image.
+3. The owner chooses the last-seen location on the map or explicitly requests device location; no default coordinates are submitted without that choice.
+4. The report records the pet's last-seen time and location, description, and report-level contact choice.
+5. The report begins in `LOST` status.
+6. Search can now include the approved report fields for authenticated users.
+7. The report reuses the Pet Profile image.
 
 There is no separate "found report" object.
 
 ## 4. Search and review likely matches
+
+An unauthenticated visitor may browse and filter bounded report and Spotting pins by activity, species, breed, time, and radius, then open their detail pages. Anonymous report details omit contact choices and private account data. Full report search remains authenticated.
 
 1. An authenticated user opens search.
 2. The user applies available filters.
@@ -41,6 +44,14 @@ There is no separate "found report" object.
 5. Candidate reports may be ranked by the Deterministic Matching Engine.
 6. The UI shows the candidate report information and the factors that contributed to ranking.
 7. A no-result state is clear and does not expose private account data.
+
+### Submit an anonymous Spotting
+
+1. A visitor selects a species and image.
+2. The visitor confirms the date and time, which initially use the current time.
+3. The visitor chooses a location on the map or explicitly requests device location. No default coordinates are submitted without that choice.
+4. The visitor may add breed, estimated weight, description, and distinguishing characteristics.
+5. The backend validates the location and publishes the Spotting without account or contact information.
 
 ## 5. Contact the owner
 
