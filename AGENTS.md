@@ -34,6 +34,7 @@ Keep these decisions intact unless the team changes the specification first:
 
 - `Lost Pet Report` is the only report object. `LOST`, `FOUND`, and `REMOVED` are lifecycle states.
 - Search and filtering of Lost Pet Reports require authentication.
+- Preserve existing public map browsing and its activity, species, breed, time, and radius filters, plus public Lost Pet Report detail links and public Spotting detail pages. Anonymous responses may contain only approved recovery information and must omit contact choices and private account data. This is distinct from authenticated full report search.
 - Lost Pet Reports reuse the associated Pet Profile image. Do not add a `report_images` table.
 - Do not add `is_active` to Lost Pet Reports. Status is the authoritative activity state.
 - Do not add `last_message_at` to conversations. Derive it from messages.
@@ -95,7 +96,7 @@ Next.js in this repository is version 16. When framework behavior is uncertain, 
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

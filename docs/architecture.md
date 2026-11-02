@@ -46,6 +46,10 @@ Owns the Max Finder application profile, the `USER` or `ADMIN` role, and the lin
 
 Owns private Pet Profiles, ownership checks, Pet Profile lifecycle, and Pet Profile media coordination.
 
+**Spotting Management**
+
+Owns anonymous Spotting creation, public detail projections, and Spotting image coordination. It does not create contributor accounts or contact details.
+
 **Lost Pet Report Management**
 
 Owns creation, editing, visibility, contact choices, last-known pet information, and lifecycle state for Lost Pet Reports.
@@ -54,7 +58,7 @@ Owns creation, editing, visibility, contact choices, last-known pet information,
 
 **Search & Filtering**
 
-Lets authenticated users browse/filter reports with `status = LOST`. Reads only approved report data. May use temporary current/search location through the location integration. Sends candidate reports to the matching engine.
+Lets authenticated users browse/filter reports with `status = LOST`. Reads only approved report data. May use temporary current/search location through the location integration. Sends candidate reports to the matching engine. The existing public map remains available for browsing and filtering report and spotting pins by activity, species, breed, time, and radius; it is distinct from authenticated full report search.
 
 **Deterministic Matching Engine**
 
@@ -88,7 +92,7 @@ Isolates Supabase Auth session and identity operations.
 
 **Media Storage Integration**
 
-Isolates Supabase Storage behavior for Pet Profile images.
+Isolates Supabase Storage behavior for private Pet Profile images and public Spotting images. Feature operations define media workflows through narrow storage interfaces; the Storage adapter owns buckets and object paths.
 
 **Device Location Integration**
 
@@ -98,7 +102,7 @@ Wraps browser/mobile current-location capability. Location access is optional, r
 
 - Supabase Auth: credentials and authenticated sessions
 - Supabase PostgreSQL: application-owned relational data and RLS defense in depth
-- Supabase Storage: Pet Profile media
+- Supabase Storage: private Pet Profile media and public Spotting media
 - Platform Geolocation API: optional current device coordinates
 
 ## Dependency rules
@@ -123,6 +127,7 @@ Application / Domain components
 Specific domain dependencies:
 
 - Pet Management depends on Identity & Account Management, Persistence / Repository, and Media Storage Integration.
+- Spotting Management depends on Persistence / Repository and Media Storage Integration; Spotting submission remains anonymous.
 - Lost Pet Report Management depends on Identity & Account Management, Pet Management, and Persistence / Repository.
 - Search & Filtering depends on Persistence / Repository, the Deterministic Matching Engine, and optionally Device Location Integration.
 - Communication depends on Identity & Account Management, Lost Pet Report Management, and Persistence / Repository.

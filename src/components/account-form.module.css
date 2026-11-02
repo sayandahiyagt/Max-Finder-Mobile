@@ -1,0 +1,40 @@
+.form {
+  display: grid;
+  gap: 16px;
+  margin-top: 25px;
+}
+.form label {
+  display: grid;
+  gap: 7px;
+  color: #b7c9c1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form input {
+  height: 43px;
+  border: 1px solid #385247;
+  border-radius: 8px;
+  padding: 0 12px;
+  outline: 0;
+  color: #e4eee9;
+  background: var(--input);
+  font-size: 14px;
+}
+
+.form input:focus-visible,
+.form button:focus-visible {
+  outline: 2px solid #8be0bd;
+  outline-offset: 2px;
+}
+
+.form button {
+  height: 44px;
+  margin-top: 5px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: var(--green);
+  font-size: 13px;
+  font-weight: 750;
+}

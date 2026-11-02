@@ -99,6 +99,10 @@ The matching engine is stateless and does not access the database itself.
 
 Current device/search location is temporary input. Do not overwrite a report's persisted last-known pet location with it.
 
+Public map browsing is also supported. It returns bounded `LOST` report pins and Spotting pins with approved display fields so map selection can open their detail pages. Existing public-map filters include activity type, species, breed, time, and radius. Public Lost Pet Report and Spotting detail views omit contact choices and private account data. This flow does not expose authenticated full-search results or conversation data.
+
+Every public map request must include the current viewport bounds. Missing bounds are invalid; do not turn an incomplete request into a whole-database query.
+
 ## Conversation and message operations
 
 Authentication is required.

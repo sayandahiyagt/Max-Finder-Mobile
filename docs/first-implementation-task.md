@@ -1,5 +1,13 @@
 # First implementation task: authentication and application identity foundation
 
+> **Historical readiness artifact:** This plan and its repository investigation
+> describe the pre-refactor baseline. The local refactoring work has since
+> implemented this identity foundation and continued into pets, reports,
+> messaging, search, and local verification. Use
+> `development-environment.md` and `architecture-assessment.md` for current
+> repository status. The team review record below remains part of the original
+> assignment history.
+
 ## Why this is the first task
 
 The iteration plan puts repository setup, authentication, database work, and workflow in the first foundation stage.
@@ -93,7 +101,7 @@ Observed:
 - `src/lib/supabase/browser.ts`, `server.ts`, and `config.ts` exist
 - `.env.example` currently declares public Supabase values and the service-role key
 - Jest, ESLint, TypeScript checks, and build scripts exist
-- GitHub Actions runs the four verification commands on Node 20
+- GitHub Actions runs the four verification commands on Node 24
 - the latest inspected CI run passed
 - the main page is still the create-next-app starter
 - there is no Prisma dependency/configuration

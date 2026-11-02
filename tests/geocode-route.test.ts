@@ -35,4 +35,14 @@ describe("GET /api/geocode", () => {
     ]);
     expect(String(fetchSpy.mock.calls[0]?.[0])).toContain("/search?");
   });
+
+  it("rejects out-of-range coordinates without calling the geocoder", async () => {
+    const fetchSpy = jest.spyOn(global, "fetch");
+    const response = await GET(
+      new NextRequest("http://localhost/api/geocode?lat=91&lon=181"),
+    );
+
+    expect(response.status).toBe(400);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });

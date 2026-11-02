@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
-import type { ReunionReport } from "@/lib/reunions";
+import { LocalizedDateTime } from "@/components/localized-date-time";
+import {
+  parseReunionResponse,
+  type ReunionReport,
+} from "@/features/reunions/formatting";
 import styles from "./reunions-carousel.module.css";
-
-type ApiError = { error?: string };
 
 export function ReunionsCarousel() {
   const [reunions, setReunions] = useState<ReunionReport[]>([]);
@@ -21,14 +24,17 @@ export function ReunionsCarousel() {
     fetch("/api/reunions", { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Reunions request failed");
-        return response.json() as Promise<{ reunions: ReunionReport[] } & ApiError>;
+        const payload: unknown = await response.json();
+        const parsed = parseReunionResponse(payload);
+        if (!parsed) throw new Error("Reunions response is invalid.");
+        return parsed;
       })
       .then((data) => {
-        if (data.error) throw new Error(data.error);
-        setReunions(data.reunions);
+        setReunions(data);
       })
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
         setReunions([]);
         setFetchError("Reunions could not be loaded. Try again shortly.");
       })
@@ -63,7 +69,10 @@ export function ReunionsCarousel() {
 
   if (fetchError) {
     return (
-      <section className={styles.reunionSection} aria-label="Pet success stories">
+      <section
+        className={styles.reunionSection}
+        aria-label="Pet success stories"
+      >
         <p className={styles.reunionEyebrow}>
           <ShieldCheck size={15} /> Success stories
         </p>
@@ -87,24 +96,21 @@ export function ReunionsCarousel() {
         </p>
       ) : (
         <div className={styles.reunionCarousel}>
-          <div
-            className={styles.reunionCarousel__viewport}
-            ref={viewportRef}
-          >
+          <div className={styles.reunionCarousel__viewport} ref={viewportRef}>
             <div className={styles.reunionCarousel__container}>
               {reunions.map((reunion) => (
-                <div
-                  className={styles.reunionCarousel__slide}
-                  key={reunion.id}
-                >
+                <div className={styles.reunionCarousel__slide} key={reunion.id}>
                   <Link
                     href={`/lost-pets/reports/${reunion.id}`}
                     className={styles.reunionCard}
                   >
                     {reunion.imageUrl ? (
-                      <img
+                      <Image
                         className={styles.reunionImage}
                         src={reunion.imageUrl}
+                        width={600}
+                        height={290}
+                        unoptimized
                         alt={reunion.petName}
                       />
                     ) : (
@@ -118,7 +124,9 @@ export function ReunionsCarousel() {
                       <h3>{reunion.petName}</h3>
                       <span className={styles.reunionBadge}>Reunited</span>
                       {reunion.species && reunion.breed ? (
-                        <p>{reunion.species} · {reunion.breed}</p>
+                        <p>
+                          {reunion.species} · {reunion.breed}
+                        </p>
                       ) : (
                         <p>{reunion.species ?? reunion.breed ?? "Pet"}</p>
                       )}
@@ -126,7 +134,11 @@ export function ReunionsCarousel() {
                       <p>{reunion.locationLabel ?? "Address unavailable"}</p>
                       {reunion.description && <p>{reunion.description}</p>}
                       <strong>
-                        Reunited: {new Date(reunion.reunitedAt ?? reunion.lastSeenAt).toLocaleDateString()}
+                        Reunited:{" "}
+                        <LocalizedDateTime
+                          value={reunion.reunitedAt ?? reunion.lastSeenAt}
+                          dateOnly
+                        />
                       </strong>
                     </div>
                   </Link>

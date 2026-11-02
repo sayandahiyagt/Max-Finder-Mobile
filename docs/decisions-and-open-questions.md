@@ -9,6 +9,7 @@ If an open question matters to the current task, ask the team. Do not silently t
 ### Product and scope
 
 - Version 1 targets one neighborhood or community.
+- Preserve currently shipped capabilities during refactoring, including capabilities added after this specification was written. A missing or conflicting spec entry is not permission to remove behavior; update product contracts when needed.
 - The current implementation client is Web.
 - Mobile is planned later.
 - Administration is Web-only.
@@ -32,6 +33,8 @@ If an open question matters to the current task, ask the team. Do not silently t
 - One `Lost Pet Report` object.
 - `LOST`, `FOUND`, and `REMOVED` are statuses.
 - Search considers `LOST` reports.
+- Preserve the existing public map browse and activity/species/breed/time/radius filters with Lost Pet Report and Spotting pins, plus public detail pages for both. Public views omit contact choices and private account data; full report search remains authenticated.
+- Public recovery map and report-detail pins preserve exact stored Lost Pet Report and Spotting coordinates.
 - No `is_active` field.
 - `REMOVED` is not physical deletion.
 - Reports reuse Pet Profile images.
@@ -42,8 +45,13 @@ If an open question matters to the current task, ask the team. Do not silently t
 - Conversations are tied to one Lost Pet Report.
 - A conversation has exactly two distinct user participants.
 - Messages are private to those participants.
+- Participants can continue reading existing conversations after a report becomes `FOUND` or `REMOVED`; neither participant can send new messages after either transition.
 - `last_message_at` is derived from messages.
 - Version 1 does not promise blocking, user-reporting, abuse-review, or message-limit features.
+
+### Media cleanup
+
+- Keep the local media audit read-only and manually reviewed. Do not add automatic object deletion or a durable cleanup queue in this refactor. An unreferenced object is only a candidate for review, not proof that deletion is safe.
 
 ### Third-party organizations
 
@@ -66,7 +74,7 @@ Older iteration/milestone language should not be implemented literally where the
 | Earlier shorthand/uncertainty | Current Version 1 decision |
 | --- | --- |
 | "lost/found reports" | One Lost Pet Report with `LOST`, `FOUND`, `REMOVED` lifecycle |
-| public report search | authenticated search/filtering |
+| public report search | authenticated full search; public map browse/detail and its existing filters are preserved separately |
 | possible live shelter provider | application-owned third-party organization table |
 | separate report image concepts | reuse Pet Profile image |
 | moderation/block/report promises | not part of current Version 1 |
@@ -80,11 +88,9 @@ Version 1 defines deletion relationships but does not define exact time-based re
 
 Do not invent "delete after 30 days" or similar behavior.
 
-### Exact location precision shown in the UI
+### Pet Profile age and date of birth
 
-The design requires least exposure and separation between last-known pet location and current device location, but it does not define an exact decimal/place precision for display.
-
-Do not expose more precision than needed. Ask the team if the current task needs a fixed UI rule.
+The baseline data model specifies optional `date_of_birth`, while the shipped Pet Profile form and database also require an integer `age`. This refactor preserves both fields. Do not remove `age`, derive one field from the other, or migrate existing values without a product and data decision.
 
 ### Password composition policy
 

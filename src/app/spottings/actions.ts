@@ -3,48 +3,126 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { uploadImage } from "@/lib/supabase/upload";
+import { createSpotting as createSpottingInApp } from "@/features/spottings/application";
+import { SpottingSubmissionError } from "@/features/spottings/errors";
+import type { SpottingActionState } from "@/features/spottings/form-state";
+import { spottingImageStorage } from "@/lib/supabase/media";
+import {
+  ImageUploadValidationError,
+  parseImageUpload,
+} from "@/lib/image-upload";
 import { reverseGeocode } from "@/lib/geocoding";
+import { parseCoordinates } from "@/lib/coordinates";
+import { parseLocalDateTime } from "@/lib/local-date-time";
+import {
+  captureTextFields,
+  FormFieldError,
+  readTextField,
+} from "@/lib/form-data";
+import { isPetSpecies, isWeightRange } from "@/lib/pet-options";
 
-export async function createSpotting(formData: FormData) {
-  const value = (name: string, max = 2000) => {
-    const result = String(formData.get(name) ?? "").trim();
-    if (result.length > max) throw new Error(`Invalid ${name}.`);
-    return result || null;
+function submittedValues(formData: FormData) {
+  return captureTextFields(formData, {
+    species: 20,
+    breed: 100,
+    weightRange: 30,
+    spottedAt: 16,
+    spottedAtTimezoneOffset: 4,
+    description: 2000,
+    distinguishingCharacteristics: 2000,
+    locationLabel: 255,
+    latitude: 40,
+    longitude: 40,
+  });
+}
+
+function failedState(
+  previousState: SpottingActionState,
+  formData: FormData,
+  error: unknown,
+): SpottingActionState {
+  const message =
+    error instanceof SpottingSubmissionError ||
+    error instanceof ImageUploadValidationError
+      ? error.message
+      : error instanceof FormFieldError
+        ? "Check the spotting details and try again."
+        : "Spotting could not be published. Please try again.";
+  return {
+    kind: "error",
+    message,
+    values: submittedValues(formData),
+    submission: previousState.submission + 1,
   };
-  const spottedAt = String(formData.get("spottedAtOverride") || formData.get("spottedAt") || new Date().toISOString());
-  const species = value("speciesOverride", 20) ?? value("species", 20);
-  if (species !== "Dog" && species !== "Cat") {
-    throw new Error("Please select whether the spotted pet is a dog or cat.");
-  }
-  const breed = value("breedOverride", 100) ?? value("breed", 100);
-  const weightRange = value("weightRangeOverride", 30) ?? value("weightRange", 30);
-  const description = value("descriptionOverride") ?? value("description");
-  const distinguishingCharacteristics = value("distinguishingCharacteristicsOverride") ?? value("distinguishingCharacteristics");
-  const latitudeValue = formData.get("latitudeOverride") || formData.get("latitude");
-  const longitudeValue = formData.get("longitudeOverride") || formData.get("longitude");
-  const latitude = Number(latitudeValue);
-  const longitude = Number(longitudeValue);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    throw new Error("Please provide an image, time, and location.");
-  }
-  const locationLabel = await reverseGeocode(latitude, longitude);
-  if (!locationLabel) {
-    throw new Error("Could not determine an address for this spotting location.");
-  }
-  const { admin, path: imagePath } = await uploadImage(
-    formData.get("image"),
-    "spotting-images",
-    "anonymous",
-  );
-  const { data, error } = await admin.from("spottings").insert({
-    species, breed, weight_range: weightRange, description, distinguishing_characteristics: distinguishingCharacteristics,
-    spotted_at: new Date(spottedAt).toISOString(), latitude, longitude, location_label: locationLabel, image_path: imagePath,
-  }).select("id").single();
-  if (error) {
-    await admin.storage.from("spotting-images").remove([imagePath]);
-    throw new Error("Could not publish this spotting.");
+}
+
+export async function createSpotting(
+  previousState: SpottingActionState,
+  formData: FormData,
+): Promise<SpottingActionState> {
+  let spottingId: string;
+  try {
+    const spottedAt = parseLocalDateTime(
+      formData.get("spottedAt"),
+      formData.get("spottedAtTimezoneOffset"),
+    );
+    if (!spottedAt) {
+      throw new SpottingSubmissionError(
+        "Please enter a valid spotting date and time.",
+      );
+    }
+    const species = readTextField(formData, "species", 20);
+    if (!isPetSpecies(species)) {
+      throw new SpottingSubmissionError(
+        "Please select whether the spotted pet is a dog or cat.",
+      );
+    }
+    const breed = readTextField(formData, "breed", 100) || null;
+    const weightRangeValue = readTextField(formData, "weightRange", 30);
+    const weightRange = weightRangeValue
+      ? isWeightRange(weightRangeValue)
+        ? weightRangeValue
+        : null
+      : null;
+    if (weightRangeValue && !weightRange) {
+      throw new SpottingSubmissionError("Choose a valid weight range.");
+    }
+    const description = readTextField(formData, "description") || null;
+    const distinguishingCharacteristics =
+      readTextField(formData, "distinguishingCharacteristics") || null;
+    const coordinates = parseCoordinates(
+      formData.get("latitude"),
+      formData.get("longitude"),
+    );
+    if (!coordinates) {
+      throw new SpottingSubmissionError(
+        "Please provide an image, time, and location.",
+      );
+    }
+    const image = await parseImageUpload(formData.get("image"));
+    const locationLabel = await reverseGeocode(
+      coordinates.latitude,
+      coordinates.longitude,
+    );
+    if (!locationLabel) {
+      throw new SpottingSubmissionError(
+        "Could not determine an address for this spotting location.",
+      );
+    }
+    const spotting = await createSpottingInApp({
+      species,
+      breed,
+      weightRange,
+      description,
+      distinguishingCharacteristics,
+      spottedAt,
+      ...coordinates,
+      locationLabel,
+    }, image, spottingImageStorage);
+    spottingId = spotting.id;
+  } catch (error) {
+    return failedState(previousState, formData, error);
   }
   revalidatePath("/");
-  redirect(`/spottings/${data.id}?created=1`);
+  redirect(`/spottings/${spottingId}?created=1`);
 }

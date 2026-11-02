@@ -1,3 +1,10 @@
+import { parseCoordinates } from "./coordinates";
+import {
+  parseLocationSearchResult,
+  type LocationSearchResult,
+} from "./location-contract";
+import { isRecord } from "./record";
+
 const NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse";
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
 const REQUEST_TIMEOUT_MS = 8_000;
@@ -7,36 +14,17 @@ const requestHeaders = {
   "User-Agent": "MaxFinder/1.0 (community pet recovery app)",
 };
 
-export type LocationSearchResult = {
-  latitude: number;
-  longitude: number;
-  label: string;
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
 function parseSearchResults(value: unknown): LocationSearchResult[] {
   if (!Array.isArray(value)) return [];
 
   return value.flatMap((entry) => {
     if (!isRecord(entry)) return [];
-    const latitude = Number(entry.lat);
-    const longitude = Number(entry.lon);
-    const label = typeof entry.display_name === "string"
-      ? entry.display_name.trim()
-      : "";
-
-    if (
-      !Number.isFinite(latitude) ||
-      !Number.isFinite(longitude) ||
-      !label
-    ) {
-      return [];
-    }
-
-    return [{ latitude, longitude, label }];
+    const result = parseLocationSearchResult({
+      latitude: entry.lat,
+      longitude: entry.lon,
+      label: entry.display_name,
+    });
+    return result ? [result] : [];
   });
 }
 
@@ -66,11 +54,14 @@ export async function reverseGeocode(
   latitude: number,
   longitude: number,
 ): Promise<string | null> {
+  const coordinates = parseCoordinates(latitude, longitude);
+  if (!coordinates) return null;
+
   try {
     const url = new URL(NOMINATIM_REVERSE_URL);
     url.searchParams.set("format", "jsonv2");
-    url.searchParams.set("lat", String(latitude));
-    url.searchParams.set("lon", String(longitude));
+    url.searchParams.set("lat", String(coordinates.latitude));
+    url.searchParams.set("lon", String(coordinates.longitude));
 
     const response = await fetch(url, {
       headers: requestHeaders,

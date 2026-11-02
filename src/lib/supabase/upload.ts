@@ -1,36 +1,24 @@
-import { createSupabaseAdminClient } from "./admin";
+import "server-only";
 
-const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxBytes = 15 * 1024 * 1024;
+import { createSupabaseAdminClient } from "./admin";
+import type { ImageUpload } from "../image-upload";
+import { logStorageFailure } from "./storage-diagnostics";
 
 export async function uploadImage(
-  value: FormDataEntryValue | null,
-  bucket: "lost-pet-images" | "spotting-images",
+  image: ImageUpload,
+  bucket: "pet-images" | "lost-pet-images" | "spotting-images",
   prefix: string,
 ) {
-  if (!(value instanceof File) || value.size === 0) {
-    throw new Error("Choose an image from your device.");
-  }
-  if (!allowedTypes.has(value.type) || value.size > maxBytes) {
-    throw new Error("Images must be JPEG, PNG, or WebP files up to 15 MB.");
-  }
-
-  const extension = value.type.split("/")[1].replace("jpeg", "jpg");
-  const path = `${prefix}/${crypto.randomUUID()}.${extension}`;
+  const path = `${prefix}/${crypto.randomUUID()}.${image.extension}`;
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.storage.from(bucket).upload(path, value, {
-    contentType: value.type,
+  const { error } = await admin.storage.from(bucket).upload(path, image.file, {
+    contentType: image.contentType,
     cacheControl: "3600",
     upsert: false,
   });
   if (error) {
-    console.error("Supabase image upload failed.", {
-      bucket,
-      statusCode: error.statusCode,
-      name: error.name,
-      message: error.message,
-    });
+    logStorageFailure("upload", bucket, error);
     throw new Error("Image upload failed. Please try again.");
   }
-  return { admin, path };
+  return { path };
 }

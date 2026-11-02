@@ -1,22 +1,25 @@
-import { rankRelatedSpottings } from "@/lib/matching";
+import {
+  rankRelatedSpottings,
+} from "@/features/search/matching";
+import { dummyPet, dummyReport, dummySpotting } from "./fixtures/dummy-data";
 
 describe("rankRelatedSpottings", () => {
   const report = {
-    species: "Dog",
-    breed: "Golden Retriever",
-    weightRange: "51–75 lbs",
-    description: "Golden coat, teal collar, white patch under chin",
-    latitude: 40.660204,
-    longitude: -73.968956,
-    lastSeenAt: "2026-10-21T20:15:00.000Z",
+    species: dummyPet.species,
+    breed: dummyPet.breed,
+    weightRange: "Under 10 lbs",
+    description: dummyPet.description,
+    latitude: dummyReport.lastSeenLat,
+    longitude: dummyReport.lastSeenLng,
+    lastSeenAt: dummyReport.lastSeenAt,
   };
 
   it("ranks matching characteristics, proximity, and time above weak candidates", () => {
     const results = rankRelatedSpottings(report, [
       {
         id: "weak",
-        species: "Cat",
-        breed: "Domestic Shorthair",
+        species: "Dog",
+        breed: "Beagle",
         weightRange: "10–25 lbs",
         description: "Gray tabby",
         distinguishingCharacteristics: null,
@@ -28,16 +31,17 @@ describe("rankRelatedSpottings", () => {
       },
       {
         id: "strong",
-        species: "Dog",
-        breed: "Golden Retriever",
-        weightRange: "51–75 lbs",
-        description: "Friendly golden dog with teal collar",
-        distinguishingCharacteristics: "Small white patch under the chin",
-        latitude: 40.661102,
-        longitude: -73.967431,
-        spottedAt: "2026-10-21T21:05:00.000Z",
-        locationLabel: "Long Meadow, Prospect Park, Brooklyn, NY",
-        imagePath: "development-seed/maple.webp",
+        species: dummySpotting.species,
+        breed: dummySpotting.breed,
+        weightRange: dummySpotting.weight_range,
+        description: "Gray tabby with a white chest",
+        distinguishingCharacteristics:
+          dummySpotting.distinguishing_characteristics,
+        latitude: dummySpotting.latitude,
+        longitude: dummySpotting.longitude,
+        spottedAt: dummySpotting.spotted_at,
+        locationLabel: dummySpotting.location_label,
+        imagePath: dummySpotting.image_path,
       },
     ]);
 

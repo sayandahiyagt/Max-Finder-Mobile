@@ -1,5 +1,11 @@
 # Agentic Development Readiness rubric check
 
+> **Historical readiness assessment:** This rubric check records the handoff
+> package before the local refactoring run. Some repository-state claims below
+> are now stale; re-evaluate them against `development-environment.md`,
+> `architecture-assessment.md`, and the current CI state before using this as
+> submission evidence.
+
 This file maps the handoff package to the rubric. It intentionally excludes the separate "Team Understanding & Readiness" section, which the team will prepare later.
 
 ## 1. Project Specifications: target 15 / 15
@@ -43,7 +49,7 @@ Evidence:
 - secrets are separated from browser-safe variables;
 - the app run command is documented;
 - lint, typecheck, test, and build commands are documented;
-- CI behavior and Node 20 are documented;
+- CI behavior and Node 24 are documented;
 - known gaps such as missing Prisma/migrations are identified as implementation work rather than hidden setup;
 - the inspected repository's latest CI run was successful.
 

@@ -1,88 +1,34 @@
 "use client";
 
 import {
-  CircleMarker,
   Circle,
   MapContainer,
   Marker,
-  Popup,
   TileLayer,
   useMapEvents,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
+import { MapReportMarker } from "@/components/map-report-marker";
+import { parseMapActivity } from "@/features/search/map-contract";
+import { getCurrentDeviceLocation } from "@/lib/geolocation";
+import {
+  defaultMapUiFilters,
+  type MapExplorerProps,
+  type MapPinCounts,
+  type MapReport,
+} from "@/features/search/types";
 
-export type MapFilters = {
-  activityType: "all" | "lost" | "spotted";
-  species: string;
-  breed: string;
-  timeRange: string;
-};
-
-type MapExplorerProps = {
-  locationRequest?: number;
-  onCountsChange?: (counts: { reports: number; spottings: number }) => void;
-  onReportsChange?: (reports: MapReport[]) => void;
-  onLocationChange?: (position: [number, number]) => void;
-  searchLocation?: [number, number] | null;
-  radiusMiles?: number | null;
-  filters?: MapFilters;
-};
-
-export type MapReport = {
-  id: string;
-  type: "lost" | "spotted";
-  name: string;
-  species?: string | null;
-  breed?: string | null;
-  locationLabel?: string | null;
-  imageUrl?: string | null;
-  timestamp: string;
-  time: string;
-  position: [number, number];
-};
+import styles from "./map-explorer.module.css";
 
 const searchIcon = L.divIcon({
-  className: "search-location-marker",
+  className: styles.searchLocationMarker,
   html: "",
   iconSize: [10, 10],
   iconAnchor: [5, 5],
 });
-
-function matchesMapFilters(
-  report: MapReport,
-  filters: MapFilters,
-  searchLocation: [number, number] | null,
-  radiusMiles: number | null,
-) {
-  if (filters.activityType !== "all" && report.type !== filters.activityType) return false;
-  if (filters.species && (report.species ?? "").toLowerCase() !== filters.species.toLowerCase()) return false;
-  if (filters.breed && !(report.breed ?? "").toLowerCase().includes(filters.breed.toLowerCase())) return false;
-  if (filters.timeRange !== "any") {
-    const days = Number(filters.timeRange);
-    if (Number.isFinite(days) && Date.now() - new Date(report.timestamp).getTime() > days * 86400000) {
-      return false;
-    }
-  }
-  if (searchLocation && radiusMiles !== null && Number.isFinite(radiusMiles) && radiusMiles > 0) {
-    const [lat, lng] = searchLocation;
-    const [reportLat, reportLng] = report.position;
-    const earthRadius = 3958.8;
-    const dLat = ((reportLat - lat) * Math.PI) / 180;
-    const dLng = ((reportLng - lng) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos((lat * Math.PI) / 180) *
-        Math.cos((reportLat * Math.PI) / 180) *
-        Math.sin(dLng / 2) ** 2;
-    const miles = earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    if (miles > radiusMiles) return false;
-  }
-  return true;
-}
 
 function ResizeMap() {
   const map = useMap();
@@ -96,38 +42,41 @@ function ResizeMap() {
 function CenterOnUser({
   request,
   onLocationChange,
+  onLocationError,
 }: {
   request: number;
   onLocationChange?: (position: [number, number]) => void;
+  onLocationError?: (message: string) => void;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const position: [number, number] = [coords.latitude, coords.longitude];
+    if (request === 0) return;
+    let cancelled = false;
+    void getCurrentDeviceLocation()
+      .then((position) => {
+        if (cancelled) return;
         map.setView(position, 14, {
           animate: true,
         });
         onLocationChange?.(position);
-      },
-      () => {
-        // The default map area remains available when location is denied.
-      },
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 },
-    );
-  }, [map, request, onLocationChange]);
+        onLocationError?.("");
+      })
+      .catch(() => {
+        if (!cancelled)
+          onLocationError?.(
+            "Location permission was denied or unavailable. Search for a neighborhood or address instead.",
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [map, request, onLocationChange, onLocationError]);
 
   return null;
 }
 
-function CenterOnSearch({
-  position,
-}: {
-  position: [number, number] | null;
-}) {
+function CenterOnSearch({ position }: { position: [number, number] | null }) {
   const map = useMap();
 
   useEffect(() => {
@@ -152,62 +101,86 @@ function BoundsWatcher({ onChange }: { onChange: (bounds: string) => void }) {
 export default function MapExplorer({
   locationRequest = 0,
   onCountsChange,
-  onReportsChange,
   onLocationChange,
+  onLocationError,
   searchLocation = null,
   radiusMiles = null,
-  filters = { activityType: "all", species: "", breed: "", timeRange: "any" },
+  filters = defaultMapUiFilters,
 }: MapExplorerProps) {
+  const searchLatitude = searchLocation?.[0];
+  const searchLongitude = searchLocation?.[1];
   const [bounds, setBounds] = useState(
     "minLat=40.68&maxLat=40.76&minLng=-74.06&maxLng=-73.96",
   );
   const [reports, setReports] = useState<MapReport[]>([]);
   const [mapError, setMapError] = useState<string | null>(null);
-  const previousCountsRef = useRef<{ reports: number; spottings: number } | null>(null);
+  const previousCountsRef = useRef<MapPinCounts | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/map?${bounds}`, { signal: controller.signal })
+    const params = new URLSearchParams(bounds);
+    params.set("activityType", filters.activityType);
+    if (filters.species) params.set("species", filters.species);
+    if (filters.breed) params.set("breed", filters.breed);
+    if (filters.timeRange !== "any")
+      params.set("timeRangeDays", filters.timeRange);
+    if (
+      searchLatitude !== undefined &&
+      searchLongitude !== undefined &&
+      radiusMiles !== null &&
+      radiusMiles > 0
+    ) {
+      params.set("centerLatitude", String(searchLatitude));
+      params.set("centerLongitude", String(searchLongitude));
+      params.set("radiusMiles", String(radiusMiles));
+    }
+
+    fetch(`/api/map?${params}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Map request failed");
-        return response.json() as Promise<{
-          reports: MapReport[];
-          spottings: MapReport[];
-        }>;
+        const payload: unknown = await response.json();
+        const pins = parseMapActivity(payload);
+        if (!pins) throw new Error("Map response is invalid");
+        return pins;
       })
-      .then((data) => {
-        const loadedReports = [...data.reports, ...data.spottings];
+      .then((loadedReports) => {
         setMapError(null);
         setReports(loadedReports);
       })
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
         setReports([]);
-        onReportsChange?.([]);
-        onCountsChange?.({ reports: 0, spottings: 0 });
         setMapError("Map activity could not be loaded. Try again shortly.");
       });
     return () => controller.abort();
-  }, [bounds, onCountsChange, onReportsChange]);
-
-  const filteredReports = reports.filter((report) =>
-    matchesMapFilters(report, filters, searchLocation, radiusMiles),
-  );
+  }, [
+    bounds,
+    filters.activityType,
+    filters.breed,
+    filters.species,
+    filters.timeRange,
+    onCountsChange,
+    radiusMiles,
+    searchLatitude,
+    searchLongitude,
+  ]);
 
   useEffect(() => {
-    const nextCounts = {
-      reports: filteredReports.filter((report) => report.type === "lost").length,
-      spottings: filteredReports.filter((report) => report.type === "spotted").length,
+    const nextCounts: MapPinCounts = {
+      reports: reports.filter((report) => report.type === "lost").length,
+      spottings: reports.filter((report) => report.type === "spotted").length,
     };
 
-    if (previousCountsRef.current?.reports !== nextCounts.reports ||
-        previousCountsRef.current?.spottings !== nextCounts.spottings) {
+    if (
+      previousCountsRef.current?.reports !== nextCounts.reports ||
+      previousCountsRef.current?.spottings !== nextCounts.spottings
+    ) {
       previousCountsRef.current = nextCounts;
       onCountsChange?.(nextCounts);
     }
 
-    onReportsChange?.(filteredReports);
-  }, [filteredReports, onCountsChange, onReportsChange]);
+  }, [reports, onCountsChange]);
 
   return (
     <MapContainer
@@ -223,15 +196,14 @@ export default function MapExplorer({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ResizeMap />
-      <CenterOnUser request={locationRequest} onLocationChange={onLocationChange} />
+      <CenterOnUser
+        request={locationRequest}
+        {...(onLocationChange ? { onLocationChange } : {})}
+        {...(onLocationError ? { onLocationError } : {})}
+      />
       <CenterOnSearch position={searchLocation} />
       <BoundsWatcher onChange={setBounds} />
-      {searchLocation && (
-        <Marker
-          position={searchLocation}
-          icon={searchIcon}
-        />
-      )}
+      {searchLocation && <Marker position={searchLocation} icon={searchIcon} />}
       {searchLocation && radiusMiles && (
         <Circle
           center={searchLocation}
@@ -250,47 +222,8 @@ export default function MapExplorer({
           {mapError}
         </div>
       )}
-      {filteredReports.map((report) => (
-        <CircleMarker
-          key={report.id}
-          center={report.position}
-          radius={report.type === "lost" ? 11 : 9}
-          pathOptions={{
-            color: report.type === "lost" ? "#fff" : "#fff",
-            fillColor: report.type === "lost" ? "#ed725d" : "#4f94d0",
-            fillOpacity: 1,
-            weight: 3,
-          }}
-        >
-          <Popup>
-            <div className="map-popup">
-              {report.imageUrl ? (
-                <img
-                  className="map-popup-image"
-                  src={report.imageUrl}
-                  alt={`${report.type === "lost" ? "Lost pet" : "Spotted pet"} photo`}
-                />
-              ) : (
-                <div className="map-popup-image-placeholder">No image available</div>
-              )}
-              <span className={`popup-badge ${report.type}`}>
-                {report.type === "lost" ? "Lost pet" : "Spotting"}
-              </span>
-              {report.name && <strong>{report.name}</strong>}
-              <span>{report.locationLabel ?? "Address unavailable"}</span>
-              <small>{report.time}</small>
-              <Link
-                href={
-                  report.type === "spotted"
-                    ? `/spottings/${report.id}`
-                    : `/lost-pets/reports/${report.id}`
-                }
-              >
-                View details →
-              </Link>
-            </div>
-          </Popup>
-        </CircleMarker>
+      {reports.map((report) => (
+        <MapReportMarker key={report.id} report={report} />
       ))}
     </MapContainer>
   );

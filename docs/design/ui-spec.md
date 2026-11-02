@@ -55,9 +55,21 @@ Needs:
 - edit owned report
 - display `LOST`, `FOUND`, or `REMOVED` state appropriately
 - mark found
-- show only approved report/contact information to other authenticated users
+- show approved report information to other users; anonymous visitors must not see contact choices or private account data
 
 Do not present FOUND as a different object type.
+
+### Anonymous Spotting contribution
+
+Needs:
+
+- species and image
+- spotted date and time
+- an explicitly selected location, chosen on the map or through an explicit device-location request
+- optional breed, estimated weight, description, and distinguishing characteristics
+- clear location lookup and device permission errors
+
+Do not prefill a reportable coordinate with a default or unconfirmed device location.
 
 ### Search and matching
 
