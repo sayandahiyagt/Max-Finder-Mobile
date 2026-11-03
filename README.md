@@ -80,6 +80,7 @@ The tracked environment variable names are:
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DATABASE_URL`
+- `SUPABASE_DB_CA_CERT_BASE64` (Vercel Preview and Production only)
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` and `DATABASE_URL` server-side. Never commit
 `.env.local` or secret values.
@@ -143,9 +144,15 @@ Use the matching project's transaction-pooler connection string for
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (store as a hidden secret)
 - `DATABASE_URL` (store as a hidden secret)
+- `SUPABASE_DB_CA_CERT_BASE64` (server-only TLS certificate setting)
 
-The PostgreSQL certificate setup for Vercel is still pending. Do not treat a
-successful Vercel build as proof that database-backed features can connect.
+For each Vercel environment, get the PostgreSQL root CA certificate from that
+Supabase project's database settings and encode the PEM file as one base64
+value. Add it as `SUPABASE_DB_CA_CERT_BASE64` in the matching Vercel scope.
+This is certificate material, not an API key. Keep it server-only alongside
+the database URL. Local development does not need it. The app verifies the
+certificate when Prisma connects to hosted PostgreSQL. A successful Vercel
+build alone does not prove database-backed features can connect.
 
 Deploy a production build:
 
