@@ -127,6 +127,7 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY
 DATABASE_URL
+SUPABASE_DB_CA_CERT_BASE64
 ```
 
 During local development, `db:configure` sets these variables from the local
@@ -138,6 +139,19 @@ credentials in their Vercel environment scopes and do not copy them into
 `DATABASE_URL` points Prisma at the local Supabase PostgreSQL service during
 local development. Supabase CLI owns the SQL migration history. Prisma Migrate
 is not used in this repository.
+
+`SUPABASE_DB_CA_CERT_BASE64` is required only in Vercel Preview and Production.
+Set it to the base64-encoded PEM root CA certificate downloaded from the
+matching Supabase project's database settings. It is certificate material, not
+an API key. The database URL and service-role key are secrets; the CA
+certificate does not grant access, but keep this server-only variable out of
+browser code. Local Supabase uses its loopback connection and does not need it.
+
+Use the Preview scope for the hosted development project's URL, publishable
+key, service-role key, transaction-pooler `DATABASE_URL`, and CA certificate.
+Use the Production scope for the corresponding production project's values.
+Do not configure the Vercel Development scope; local app development uses
+`.env.local` with the local Supabase stack.
 
 Do not put `SUPABASE_SERVICE_ROLE_KEY` or `DATABASE_URL` in browser code.
 

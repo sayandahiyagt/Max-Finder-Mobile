@@ -76,12 +76,13 @@ data.
 
 ## Vercel Preview status
 
-Pull requests create Vercel Preview deployments for team review. Configure the
-Preview environment variables to use the hosted development project. At the
-latest check, Preview was missing `DATABASE_URL`; it must use the development
-project's transaction pooler. The Preview database connection and certificate
-setup are not yet verified. Production remains separate and is not part of this
-transition.
+Pull requests create Vercel Preview deployments for team review. The Preview
+database connection is implemented to require the development project's
+transaction pooler and a valid CA certificate. It has not been verified
+against Vercel or hosted PostgreSQL yet. Configure Preview with the development
+project URL, publishable key, service-role key, transaction-pooler
+`DATABASE_URL`, and base64-encoded CA certificate. Production remains separate
+and is not part of this transition.
 
 The repository no longer runs the application locally against hosted
 development. Use the local Supabase stack for local app development and
