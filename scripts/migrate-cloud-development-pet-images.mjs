@@ -3,18 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import {
   developmentApiUrl,
   developmentProjectRef,
-  readCloudEnvironment,
-  validateDevelopmentDatabase,
+  readDevelopmentMediaEnvironment,
 } from "./cloud-development-config.mjs";
 
-const environment = readCloudEnvironment();
-validateDevelopmentDatabase(environment.DATABASE_URL);
-if (
-  environment.NEXT_PUBLIC_SUPABASE_URL !== developmentApiUrl ||
-  !environment.SUPABASE_SERVICE_ROLE_KEY
-) {
-  throw new Error("Configure the approved development project's Storage credentials first.");
-}
+const environment = readDevelopmentMediaEnvironment();
 
 function readImageLocations() {
   const sql = `select coalesce(json_agg(json_build_object(

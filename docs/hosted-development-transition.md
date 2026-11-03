@@ -3,9 +3,12 @@
 Target: `sayandahiyagt's Project`, reference `vkdfgxvdbhmymjkrycif`.
 Production (`zbxnmkeolrcpadwzkuhp`) is excluded from this transition.
 
-The Next.js application runs locally against hosted development PostgreSQL,
-Auth, and Storage. Prisma owns application queries; Supabase CLI owns migrations.
-Keep the isolated local database for resettable synthetic integration tests.
+The application uses three stages: local development runs against local
+Supabase; Vercel Preview deployments from pull requests use hosted development;
+Vercel Production deployments from `main` use hosted production. Do not run the
+local app against hosted development. Prisma owns application queries;
+Supabase CLI owns migrations. Keep the isolated local database for resettable
+synthetic integration tests.
 
 ## Inspected state
 
@@ -64,35 +67,26 @@ remain mandatory, and the connection string must never leave the server. The
 Supabase service-role key is also server-only.
 
 Use `npm run db:dev:migrations` to inspect history and `npm run db:dev:plan` for
-a dry run. Both commands explicitly target development. `npm run db:dev:media`
-performs an idempotent, development-only check/move for legacy Pet Profile
-objects. None of these commands target production, reset a database, or seed
-hosted data.
+a dry run. Both commands explicitly target development. For the one-off Storage
+migration, run `npm run db:dev:media-configure` to fetch a narrowly scoped key
+into ignored `.env.development-media`, then run `npm run db:dev:media`. The
+media command checks and moves referenced legacy Pet Profile objects within
+development. It does not target production, reset the database, or seed hosted
+data.
 
-## App configuration and verification
+## Vercel Preview status
 
-Store the persistent development database connection in ignored
-`.env.cloud-development` as `DATABASE_URL=...`. Obtain the connection string from
-the development project's Connect panel; never put credentials in chat or Git.
-Download the development project's root certificate from **Project Settings →
-Database → SSL Configuration** to `.supabase/development-ca.crt`. Runtime
-connections require `sslmode=verify-full` and this CA, so both encryption and
-server identity are checked. The four runtime settings must all belong to this
-same development project. The local environment must remain available for
-synthetic tests.
+Pull requests create Vercel Preview deployments for team review. Configure the
+Preview environment variables to use the hosted development project. At the
+latest check, Preview was missing `DATABASE_URL`; it must use the development
+project's transaction pooler. The Preview database connection and certificate
+setup are not yet verified. Production remains separate and is not part of this
+transition.
 
-After adding `DATABASE_URL`, run `npm run cloud:configure`. It fetches only the
-approved development project's API keys into the ignored environment file with
-owner-only permissions. `npm run dev:cloud` runs on `http://127.0.0.1:3001`;
-`build:cloud` and `start:cloud` use a separate production build directory.
-Cloud settings are passed only to that app process, leaving `.env.local` intact.
-The schema alignment is complete. The cloud CA is present at the required
-ignored path. The cloud build passed and the app is running at
-`http://127.0.0.1:3001`. Smoke checks returned 200 for the home/sign-in pages,
-public map, public report and Spotting detail pages, reunion and stats endpoints,
-and both image URLs. The map returned one report and two Spottings while omitting
-contact/account fields. Anonymous `/api/auth/me` correctly returned 401. The
-reunion endpoint returned zero items because development has no eligible reunion.
+The repository no longer runs the application locally against hosted
+development. Use the local Supabase stack for local app development and
+synthetic tests. The development CLI commands above remain for reviewed shared
+database and one-off Storage maintenance tasks.
 
 To repeat the schema rehearsal, export only development's schema to ignored
 `tmp/cloud-development-audit/schema.sql`, then run

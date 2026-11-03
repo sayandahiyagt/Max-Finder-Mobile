@@ -42,11 +42,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     ".next-dev/types/**/*.ts",
-    ".next-dev/dev/types/**/*.ts",
-    ".next-cloud/types/**/*.ts",
-    ".next-cloud/dev/types/**/*.ts",
-    ".next-cloud-dev/types/**/*.ts",
-    ".next-cloud-dev/dev/types/**/*.ts"
+    ".next-dev/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
