@@ -8,7 +8,7 @@ export async function GET() {
     const counts = await getCommunityActivityCounts();
     return NextResponse.json(counts);
   } catch (error) {
-    console.error("[DEBUG-preview-db] Community stats query failed.", summarizeDatabaseError(error));
+    console.error("Community stats query failed.", summarizeDatabaseError(error));
     return NextResponse.json(
       { error: "Community statistics are temporarily unavailable." },
       { status: 503 },
