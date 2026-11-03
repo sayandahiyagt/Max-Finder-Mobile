@@ -5,6 +5,12 @@
 The repository is a layered Next.js modular monolith with local-only Supabase
 development and Prisma-backed application repositories.
 
+Use three app stages: local development runs against local Supabase; Vercel
+Preview deployments from pull requests use hosted development; Vercel Production
+deployments from `main` use hosted production. Do not run the local app against
+the hosted development project. Vercel's Development environment is not part
+of this workflow.
+
 Observed stack:
 
 - Next.js `16.4.3`
@@ -124,8 +130,10 @@ DATABASE_URL
 ```
 
 During local development, `db:configure` sets these variables from the local
-Supabase stack. Hosted development and production environments use their own
-separate project values. Do not copy hosted credentials into the local file.
+Supabase stack. Vercel Preview variables must point to the hosted development
+project; Vercel Production variables must point to production. Keep those
+credentials in their Vercel environment scopes and do not copy them into
+`.env.local`.
 
 `DATABASE_URL` points Prisma at the local Supabase PostgreSQL service during
 local development. Supabase CLI owns the SQL migration history. Prisma Migrate

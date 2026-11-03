@@ -3,28 +3,19 @@
 MaxFinder is a lost-pet reporting and community spotting application built with
 Next.js, Supabase, and Leaflet/OpenStreetMap.
 
-## Development setup
+## Three application stages
 
-The hosted development transition is in progress. Its target is
-`sayandahiyagt's Project` (`vkdfgxvdbhmymjkrycif`); see
-[transition status and prerequisites](docs/hosted-development-transition.md)
-before connecting the refactored app. Production is excluded from this work.
+- **Local development:** run the app with local Supabase and synthetic data.
+- **Team review:** pull requests create Vercel Preview deployments. Configure
+  Preview environment variables to use the hosted development Supabase project.
+- **Production:** Vercel deploys `main` with the production Supabase project.
 
-After the development schema has been aligned, teammates can run the app
-without local Docker services:
-
-1. Run `npm ci` with Node.js 24.
-2. Put the development PostgreSQL connection string in the ignored
-   `.env.cloud-development` file as `DATABASE_URL=...`.
-3. Download the development project's root CA from **Project Settings →
-   Database → SSL Configuration** to `.supabase/development-ca.crt`.
-4. Log into Supabase CLI with access to the development project and run
-   `npm run cloud:configure` to fetch its Auth/Storage keys securely.
-5. Run `npm run dev:cloud` and open `http://127.0.0.1:3001`.
-
-`npm run db:dev:migrations` inspects development migration history;
-`npm run db:dev:plan` previews pending migrations without applying them.
-Keep the resettable local stack below for synthetic database tests.
+Vercel's Development environment is not part of this workflow. Do not run the
+app locally against hosted development. See the
+[environment and verification guide](docs/development-environment.md) for
+local setup and the
+[hosted development transition record](docs/hosted-development-transition.md)
+for shared-project status.
 
 Install dependencies:
 
@@ -99,9 +90,9 @@ application database client. Do not use Prisma Migrate for this repository.
 ## Supabase database workflow
 
 The repository migrations are in [`supabase/migrations`](./supabase/migrations).
-Development and production use separate shared Supabase projects. The Next.js
-app connects to whichever project is selected by the environment variables; it
-does not require a database service running on the developer's machine.
+Development and production use separate shared Supabase projects. Local app
+development always uses the local Supabase stack. Vercel Preview uses hosted
+development, and Vercel Production uses hosted production.
 
 ### Apply migrations to shared Supabase development
 
@@ -130,6 +121,11 @@ supabase migration list --linked
 The CLI is linked to one Supabase project at a time. Re-run `supabase link`
 before switching between the shared development and production projects.
 
+The one-off Pet Profile Storage migration is separate from app development. Run
+`npm run db:dev:media-configure` to prepare its ignored development-only key
+file, then `npm run db:dev:media`. The command only targets the hosted
+development project.
+
 ## Vercel deployment workflow
 
 Link the repository to the existing Vercel project once:
@@ -138,13 +134,18 @@ Link the repository to the existing Vercel project once:
 npx vercel link --yes --project max-finder-mobile
 ```
 
-Configure these variables in the Vercel Production environment. Use the
-production Supabase URL and keys for production deployments:
+Configure these variables separately in Vercel Preview and Production. Preview
+uses the hosted development project; Production uses the production project.
+Use the matching project's transaction-pooler connection string for
+`DATABASE_URL`:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (store as a hidden secret)
 - `DATABASE_URL` (store as a hidden secret)
+
+The PostgreSQL certificate setup for Vercel is still pending. Do not treat a
+successful Vercel build as proof that database-backed features can connect.
 
 Deploy a production build:
 
