@@ -1,7 +1,5 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
-
 import { getPrismaClient } from "@/lib/db/client";
 
 export async function createOrFindReportConversation(
@@ -9,40 +7,37 @@ export async function createOrFindReportConversation(
   finderId: string,
 ) {
   const prisma = getPrismaClient();
-  const report = await prisma.lostPetReport.findUnique({
-    where: { id: reportId },
-    select: { pet: { select: { ownerId: true } }, status: true },
-  });
-  if (!report || report.status !== "LOST" || report.pet.ownerId === finderId)
-    return null;
-  const ownerId = report.pet.ownerId;
+  return prisma.$transaction(async (transaction) => {
+    const reports = await transaction.$queryRaw<
+      { report_id: string; status: string; owner_id: string }[]
+    >`
+      /* conversation creation report lock */
+      SELECT r.report_id, r.status, p.owner_id
+      FROM public.lost_pet_reports r
+      JOIN public.pets p ON p.pet_id = r.pet_id
+      WHERE r.report_id = ${reportId}::uuid
+      FOR UPDATE OF r
+    `;
+    const report = reports[0];
+    if (!report || report.status !== "LOST" || report.owner_id === finderId)
+      return null;
 
-  const user1Id = finderId < ownerId ? finderId : ownerId;
-  const user2Id = finderId < ownerId ? ownerId : finderId;
-  const where = { reportId_user1Id_user2Id: { reportId, user1Id, user2Id } };
-  const existing = await prisma.conversation.findUnique({
-    where,
-    select: { id: true },
-  });
-  if (existing) return existing;
-
-  try {
-    return await prisma.conversation.create({
-      data: {
-        reportId,
-        user1Id,
-        user2Id,
-      },
+    const user1Id = finderId < report.owner_id ? finderId : report.owner_id;
+    const user2Id = finderId < report.owner_id ? report.owner_id : finderId;
+    const where = {
+      reportId_user1Id_user2Id: { reportId, user1Id, user2Id },
+    };
+    const existing = await transaction.conversation.findUnique({
+      where,
       select: { id: true },
     });
-  } catch (error) {
-    if (
-      !(error instanceof Prisma.PrismaClientKnownRequestError) ||
-      error.code !== "P2002"
-    )
-      throw error;
-    return prisma.conversation.findUnique({ where, select: { id: true } });
-  }
+    if (existing) return existing;
+
+    return transaction.conversation.create({
+      data: { reportId, user1Id, user2Id },
+      select: { id: true },
+    });
+  });
 }
 
 export async function createMessageForParticipant(

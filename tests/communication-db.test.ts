@@ -27,6 +27,57 @@ import {
 } from "./fixtures/dummy-data";
 import { isLocalDatabase } from "./helpers/local-environment";
 
+function holdReportLock(
+  prisma: ReturnType<typeof getPrismaClient>,
+  reportId: string,
+  nextStatus?: "FOUND",
+) {
+  let release!: () => void;
+  let signalLocked!: () => void;
+  const locked = new Promise<void>((resolve) => {
+    signalLocked = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const transaction = prisma.$transaction(async (tx) => {
+    if (nextStatus) {
+      await tx.lostPetReport.update({
+        where: { id: reportId },
+        data: { status: nextStatus },
+      });
+    } else {
+      await tx.$queryRaw`
+        SELECT report_id
+        FROM public.lost_pet_reports
+        WHERE report_id = ${reportId}::uuid
+        FOR UPDATE
+      `;
+    }
+    signalLocked();
+    await released;
+  });
+  return { locked, release, transaction };
+}
+
+async function waitForBlockedQuery(
+  prisma: ReturnType<typeof getPrismaClient>,
+  queryMarker: string,
+) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const rows = await prisma.$queryRaw<{ waiting: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_stat_activity
+        WHERE wait_event_type = 'Lock'
+          AND query LIKE ${`%${queryMarker}%`}
+      ) AS waiting
+    `;
+    if (rows[0]?.waiting) return true;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  return false;
+}
+
 (isLocalDatabase ? describe : describe.skip)("communication database", () => {
   it("reuses report conversations and restricts messages to participants of active reports", async () => {
     const prisma = getPrismaClient();
@@ -237,6 +288,62 @@ import { isLocalDatabase } from "./helpers/local-environment";
       );
 
       const finderId = dummyUsers.finder.userId;
+      const resolutionLock = holdReportLock(prisma, report.id, "FOUND");
+      await resolutionLock.locked;
+      const creationDuringResolution = startReportConversation({
+        reportId: report.id,
+        finderId,
+      });
+      try {
+        expect(
+          await waitForBlockedQuery(prisma, "conversation creation report lock"),
+        ).toBe(true);
+      } finally {
+        resolutionLock.release();
+      }
+      await resolutionLock.transaction;
+      expect(await creationDuringResolution).toBeNull();
+      await prisma.lostPetReport.update({
+        where: { id: report.id },
+        data: { status: "LOST" },
+      });
+
+      const creationLock = holdReportLock(prisma, report.id);
+      await creationLock.locked;
+      const creationBeforeResolution = startReportConversation({
+        reportId: report.id,
+        finderId,
+      });
+      const resolutionAfterCreation = prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`
+          /* report resolution lock */
+          UPDATE public.lost_pet_reports
+          SET status = 'FOUND'
+          WHERE report_id = ${report.id}::uuid
+        `;
+      });
+      try {
+        expect(
+          await waitForBlockedQuery(prisma, "report resolution lock"),
+        ).toBe(true);
+      } finally {
+        creationLock.release();
+      }
+      await creationLock.transaction;
+      const createdBeforeResolution = await creationBeforeResolution;
+      await resolutionAfterCreation;
+      expect(createdBeforeResolution).not.toBeNull();
+      expect(
+        await prisma.lostPetReport.findUniqueOrThrow({
+          where: { id: report.id },
+          select: { status: true },
+        }),
+      ).toEqual({ status: "FOUND" });
+      await prisma.lostPetReport.update({
+        where: { id: report.id },
+        data: { status: "LOST" },
+      });
+
       const concurrent = await Promise.all([
         startReportConversation({ reportId: report.id, finderId }),
         startReportConversation({ reportId: report.id, finderId }),
@@ -250,35 +357,20 @@ import { isLocalDatabase } from "./helpers/local-environment";
         finderId,
       });
       expect(first?.id).toBe(second?.id);
-      let releaseTransition!: () => void;
-      let transitionLocked!: () => void;
-      const locked = new Promise<void>((resolve) => { transitionLocked = resolve; });
-      const release = new Promise<void>((resolve) => { releaseTransition = resolve; });
-      const transition = prisma.$transaction(async (tx) => {
-        await tx.lostPetReport.update({ where: { id: report.id }, data: { status: "FOUND" } });
-        transitionLocked();
-        await release;
-      });
-      await locked;
+      const transitionLock = holdReportLock(prisma, report.id, "FOUND");
+      await transitionLock.locked;
       const concurrentSend = sendConversationMessage({ conversationId: first.id, senderId: finderId, content: "Too late" });
-      let waiting = false;
       try {
-        for (let attempt = 0; attempt < 100 && !waiting; attempt++) {
-          const rows = await prisma.$queryRaw<{ waiting: boolean }[]>`
-            SELECT EXISTS (
-              SELECT 1 FROM pg_stat_activity
-              WHERE wait_event_type = 'Lock'
-                AND query LIKE '%SELECT r.report_id FROM public.lost_pet_reports%'
-            ) AS waiting
-          `;
-          waiting = rows[0]?.waiting ?? false;
-          if (!waiting) await new Promise((resolve) => setTimeout(resolve, 10));
-        }
-        expect(waiting).toBe(true);
+        expect(
+          await waitForBlockedQuery(
+            prisma,
+            "SELECT r.report_id FROM public.lost_pet_reports",
+          ),
+        ).toBe(true);
       } finally {
-        releaseTransition();
+        transitionLock.release();
       }
-      await transition;
+      await transitionLock.transaction;
       expect(await concurrentSend).toBe(false);
       await prisma.lostPetReport.update({ where: { id: report.id }, data: { status: "LOST" } });
       expect(
