@@ -1,17 +1,8 @@
-import { spawnSync } from "node:child_process";
 import nextEnv from "@next/env";
 import { createChunks, createServerClient } from "@supabase/ssr";
+import { assertLocalDockerContext } from "./helpers/local-docker-context.mjs";
 
-const context = spawnSync("docker", ["context", "show"], { encoding: "utf8" });
-if (
-  context.status !== 0 ||
-  context.stdout.trim() !== "colima-maxfinder-local"
-) {
-  process.stderr.write(
-    "Select the isolated 'colima-maxfinder-local' Docker context first.\n",
-  );
-  process.exit(2);
-}
+assertLocalDockerContext();
 
 nextEnv.loadEnvConfig(process.cwd());
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
