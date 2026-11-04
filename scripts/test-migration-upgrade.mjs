@@ -2,17 +2,9 @@ import { insertLegacyFixture, verifyMigratedFixture } from "./helpers/legacy-mig
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { Client } from "pg";
+import { assertLocalDockerContext } from "./helpers/local-docker-context.mjs";
 
-const expectedContext = "colima-maxfinder-local";
-const context = spawnSync("docker", ["context", "show"], {
-  encoding: "utf8",
-});
-if (context.status !== 0 || context.stdout.trim() !== expectedContext) {
-  process.stderr.write(
-    `Select the isolated '${expectedContext}' Docker context first.\n`,
-  );
-  process.exit(2);
-}
+assertLocalDockerContext();
 
 let envFile;
 try {

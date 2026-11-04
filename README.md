@@ -15,7 +15,7 @@ The local app connects only to local Supabase. Do not point local development at
 ## Prerequisites
 
 - Git, Node.js 24, npm, Docker, and the Supabase CLI (the project scripts can invoke it through `npm exec`).
-- Local database setup is supported on macOS with Colima. Install Colima if it is not already available. The repository does not currently provide a supported Windows local database workflow.
+- Local database setup uses Docker. On macOS, use the isolated Colima profile documented below. On Windows, Docker Desktop's `desktop-linux` context is supported.
 - Access to the GitHub repository and Supabase CLI login is needed for hosted migrations.
 
 Use the Node version recorded in `.nvmrc`:
@@ -30,11 +30,18 @@ If you do not use `nvm`, install Node.js 24 yourself. Vercel currently selects N
 
 ## Local development
 
-Start the isolated local Supabase stack. On macOS with Colima:
+Start the local Supabase stack. On macOS with Colima:
 
 ```sh
 colima start --profile maxfinder-local
 docker context use colima-maxfinder-local
+npm run db:start
+```
+
+On Windows, start Docker Desktop and select its Linux context:
+
+```powershell
+docker context use desktop-linux
 npm run db:start
 ```
 
@@ -81,6 +88,8 @@ When finished, stop the stack. Colima can also be stopped if nothing else is usi
 npm run db:stop
 colima stop --profile maxfinder-local
 ```
+
+On Windows, leave Docker Desktop running if other projects use it.
 
 ## Hosted development and pull request previews
 

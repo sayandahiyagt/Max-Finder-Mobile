@@ -3,11 +3,9 @@ import { spawnSync } from "node:child_process";
 import { parseEnv } from "node:util";
 import { Client } from "pg";
 import { insertLegacyFixture, verifyMigratedFixture } from "./helpers/legacy-migration-fixture.mjs";
+import { assertLocalDockerContext } from "./helpers/local-docker-context.mjs";
 
-const context = spawnSync("docker", ["context", "show"], { encoding: "utf8" });
-if (context.status !== 0 || context.stdout.trim() !== "colima-maxfinder-local") {
-  throw new Error("Select the isolated colima-maxfinder-local Docker context first.");
-}
+assertLocalDockerContext();
 const local = parseEnv(readFileSync(".env.local", "utf8"));
 const url = new URL(local.DATABASE_URL);
 if (!['localhost', '127.0.0.1'].includes(url.hostname) || url.port !== '54322') {

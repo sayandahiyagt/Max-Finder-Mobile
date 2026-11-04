@@ -94,11 +94,23 @@ npm run test:migration-upgrade
 npm run dev
 ```
 
-Run the local Supabase stack on macOS with Colima. The scripts require the
-Docker context `colima-maxfinder-local`. The repository has no supported
-Windows setup for local database work. Do not use Docker Desktop or a hosted
-project with these commands. The guards reject other contexts and nonlocal
-database URLs.
+Run the local Supabase stack on macOS with the dedicated Colima profile and
+Docker context:
+
+```bash
+colima start --profile maxfinder-local
+docker context use colima-maxfinder-local
+```
+
+On Windows, start Docker Desktop and select its Linux context:
+
+```powershell
+docker context use desktop-linux
+```
+
+The local scripts accept `colima-maxfinder-local` on macOS and `desktop-linux`
+on Windows. They still reject hosted projects and database URLs outside the
+local loopback ports. Do not use a hosted project with these commands.
 
 `db:reset` applies the repository SQL migrations and synthetic
 `supabase/seed.sql` data to the local database, then upserts two PNGs to the

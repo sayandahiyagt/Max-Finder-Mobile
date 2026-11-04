@@ -1,18 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { assertLocalDockerContext } from "./helpers/local-docker-context.mjs";
 
-const expectedContext = "colima-maxfinder-local";
-const context = spawnSync("docker", ["context", "show"], { encoding: "utf8" });
-if (context.status !== 0) {
-  process.stderr.write(context.stderr || "Docker is unavailable.\n");
-  process.exit(context.status ?? 1);
-}
-if (context.stdout.trim() !== expectedContext) {
-  process.stderr.write(
-    `Refusing Supabase CLI command. Select the isolated Docker context '${expectedContext}' first.\n`,
-  );
-  process.exit(2);
-}
+assertLocalDockerContext();
 
 const args = process.argv.slice(2);
 if (!args.length) {
