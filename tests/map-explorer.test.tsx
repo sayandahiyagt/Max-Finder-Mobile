@@ -19,6 +19,7 @@ jest.mock("react-leaflet", () => {
     MapContainer: container,
     Marker: container,
     Popup: container,
+    Rectangle: container,
     TileLayer: container,
     useMap: () => ({ invalidateSize: jest.fn(), setView: jest.fn() }),
     useMapEvents: jest.fn(),

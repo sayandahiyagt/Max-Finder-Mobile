@@ -23,13 +23,14 @@ Install dependencies:
 npm ci
 ```
 
-Local Supabase development runs in the dedicated `maxfinder-local` Colima
-profile. Start Colima with `colima start --profile maxfinder-local`, then select
-its Docker context with `docker context use colima-maxfinder-local`. Supabase
-stack, migration, seed, and local-auth smoke commands require this context.
-The local database workflow supports macOS with Colima. It does not support
-Windows. Prisma schema validation and client generation do not contact a
-database.
+Local Supabase development uses an isolated container engine: Colima on macOS
+or Podman Desktop on Windows. On macOS, start the `maxfinder-local` Colima
+profile and select `colima-maxfinder-local`. On Windows, start the Podman
+machine and select the `podman-maxfinder-local` Docker context. The local
+Supabase scripts verify the platform-specific context before operating. See
+[`docs/development-environment.md`](docs/development-environment.md) for the
+Windows context setup and Podman API troubleshooting steps. Prisma schema
+validation and client generation do not contact a database.
 
 Start the local stack, apply the repository migrations, and load synthetic
 records with:
@@ -47,10 +48,17 @@ npm run test:migration-upgrade
 npm run dev
 ```
 
-The reset command targets only the local database and seeds two synthetic PNGs
-in local Supabase Storage for the seeded Pet Profile and Spotting. Seed accounts
+The reset command replaces only the local database contents, reapplies its
+migrations, and loads synthetic records plus two PNGs in local Supabase
+Storage. The seed includes five nearby LOST reports and five nearby spottings
+so the map density overlay is visible on the default map view. Seed accounts
 use the password `local-only-test-password` and `.test` email addresses. Stop
 the local stack with `npm run db:stop`.
+
+The database integration, media audit, migration-upgrade, and local-auth smoke
+scripts currently require macOS with the Colima context. Windows with Podman
+supports the local app stack, reset, configuration, status, and migration
+commands.
 
 `npm run test:migration-upgrade` temporarily resets the local database to the
 legacy schema, checks synthetic rows through the alignment migrations, and

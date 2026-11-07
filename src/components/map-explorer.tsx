@@ -12,6 +12,7 @@ import L from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { MapReportMarker } from "@/components/map-report-marker";
+import { MapDensityClusters } from "@/components/map-density-clusters";
 import { parseMapActivity } from "@/features/search/map-contract";
 import { getCurrentDeviceLocation } from "@/lib/geolocation";
 import {
@@ -106,6 +107,7 @@ export default function MapExplorer({
   searchLocation = null,
   radiusMiles = null,
   filters = defaultMapUiFilters,
+  heatmapEnabled = true,
 }: MapExplorerProps) {
   const searchLatitude = searchLocation?.[0];
   const searchLongitude = searchLocation?.[1];
@@ -225,6 +227,12 @@ export default function MapExplorer({
       {reports.map((report) => (
         <MapReportMarker key={report.id} report={report} />
       ))}
+      <MapDensityClusters
+        reports={reports}
+        enabled={heatmapEnabled}
+        minClusterSize={5}
+        clusterRadiusMiles={7.5}
+      />
     </MapContainer>
   );
 }

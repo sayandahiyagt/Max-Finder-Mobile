@@ -325,6 +325,24 @@
 .spottedDot {
   background: #4f94d0;
 }
+.heatmapToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding-left: 10px;
+  margin-left: 5px;
+  border-left: 1px solid #3a554a;
+}
+.heatmapToggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: #2d9d75;
+}
+.heatmapToggle span {
+  user-select: none;
+}
 .advancedFilters {
   margin-top: 16px;
 }

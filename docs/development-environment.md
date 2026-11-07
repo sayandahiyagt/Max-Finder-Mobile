@@ -76,12 +76,11 @@ npm --version
 ```
 
 Install dependencies, start the isolated local Supabase stack, replay migrations,
-and configure the app with local-only keys:
+and configure the app with local-only keys. Use the platform-specific container
+setup below before running the Supabase commands:
 
 ```bash
 npm ci
-colima start --profile maxfinder-local
-docker context use colima-maxfinder-local
 npm run db:start
 npm run db:reset
 npm run db:configure
@@ -94,16 +93,63 @@ npm run test:migration-upgrade
 npm run dev
 ```
 
-Run the local Supabase stack on macOS with Colima. The scripts require the
-Docker context `colima-maxfinder-local`. The repository has no supported
-Windows setup for local database work. Do not use Docker Desktop or a hosted
-project with these commands. The guards reject other contexts and nonlocal
-database URLs.
+On macOS, run the local Supabase stack with the `maxfinder-local` Colima
+profile and select the `colima-maxfinder-local` Docker context:
 
-`db:reset` applies the repository SQL migrations and synthetic
-`supabase/seed.sql` data to the local database, then upserts two PNGs to the
-local Pet Profile and Spotting buckets. The seed includes three owned Pet
-Profiles and LOST, FOUND, and REMOVED reports. The local smoke verifies the
+```bash
+colima start --profile maxfinder-local
+docker context use colima-maxfinder-local
+```
+
+On Windows, use Podman Desktop. Start its Podman machine, then make sure the
+Docker CLI context named `podman-maxfinder-local` points to the Podman machine's
+named pipe. If Podman Desktop has not created that context, create it from the
+machine's reported pipe in PowerShell:
+
+```powershell
+podman machine start
+$podmanPipe = podman machine inspect --format '{{.ConnectionInfo.PodmanPipe.Path}}'
+$podmanEndpoint = "npipe://" + ($podmanPipe -replace '\\', '/')
+docker context create podman-maxfinder-local --docker "host=$podmanEndpoint"
+docker context use podman-maxfinder-local
+docker --context podman-maxfinder-local info
+```
+
+The final command must connect and show Podman in its Server section. The
+Supabase scripts verify `podman-maxfinder-local` on Windows and
+`colima-maxfinder-local` on macOS. They do not target Docker Desktop or a hosted
+project. The database test, media audit, migration-upgrade, and local-auth
+smoke scripts still enforce the macOS Colima context. The regular app stack,
+reset, status, migration listing/application, and local configuration scripts
+support the Windows Podman context.
+
+### Podman API pipe troubleshooting (Windows)
+
+Podman 6.1.4 has a reported Windows issue where `podman machine start` succeeds
+and `podman info` works, but the Docker API named pipe is missing. If
+`docker --context podman-maxfinder-local info` reports that
+`podman-machine-default` cannot be found, stop the machine and remove only its
+stale temporary API socket file if present, then start it again:
+
+```powershell
+podman machine stop
+$proxySock = Join-Path $env:TEMP 'podman\podman-machine-default-api.sock'
+if (Test-Path -LiteralPath $proxySock) {
+    Remove-Item -LiteralPath $proxySock -Force
+}
+podman machine start
+docker --context podman-maxfinder-local info
+```
+
+This workaround is documented in the [Podman Windows API pipe issue](https://github.com/podman-container-tools/podman/issues/29971). Do not remove
+other files from the temporary directory.
+
+`db:reset` replaces the local database contents, applies the repository SQL
+migrations and synthetic `supabase/seed.sql` data, then upserts two PNGs to the
+local Pet Profile and Spotting buckets. The seed includes three original Pet
+Profiles and four additional demo pets, five nearby LOST reports, five nearby
+spottings, and FOUND and REMOVED reports. The nearby activity makes the map
+density overlay visible on the default view. The local smoke verifies the
 found report appears in the reunion API and removed reports stay off public
 detail and map results. The reset is safe to rerun.
 `db:configure` writes local
