@@ -17,6 +17,9 @@ local setup and the
 [hosted development transition record](docs/hosted-development-transition.md)
 for shared-project status.
 
+The public map's zoom-scaled individual dots and synthetic demo dataset are
+documented in the [map dots and demo data guide](docs/map-clustering-readme.md).
+
 Install dependencies:
 
 ```bash
@@ -49,12 +52,38 @@ npm run dev
 ```
 
 The reset command replaces only the local database contents, reapplies its
-migrations, and loads synthetic records plus two PNGs in local Supabase
-Storage. The seed includes five nearby LOST reports and five nearby spottings
-so the map density overlay is visible on the default map view. Seed accounts
-use the password `local-only-test-password` and `.test` email addresses. Stop
-the local stack with `npm run db:stop`.
+migrations, loads canonical synthetic records and local demo photos, then adds
+1,200 synthetic LOST reports, 800 spottings, 2,000 regional cluster points, a 600-point Duluth cluster, and 12,000 nationwide coverage points by
+default. The reset runs the cluster seeder as
+`node scripts/seed-map-cluster-demo-data.mjs --points 2000`. The national
+points form a jittered oval grid about 15 to 20 miles apart across the
+contiguous U.S.
 
+To add the national grid to an existing local database without resetting it,
+run:
+
+~~~powershell
+npm run db:seed:map:density
+~~~
+
+Preview a different size before inserting:
+
+~~~powershell
+npm run db:seed:map:density -- --points 16000 --dry-run
+~~~
+
+The density command is additive and repeatable. Seed accounts use the
+password local-only-test-password and .test email addresses. Stop the local
+stack with npm run db:stop.
+
+To refresh only the 2,000-point regional cluster batch in an already-running
+local database, run:
+
+```powershell
+npm run db:seed:map:clusters
+```
+
+This command runs the cluster seeder and prepares its private pet photos.
 The database integration, media audit, migration-upgrade, and local-auth smoke
 scripts currently require macOS with the Colima context. Windows with Podman
 supports the local app stack, reset, configuration, status, and migration
@@ -62,14 +91,16 @@ commands.
 
 `npm run test:migration-upgrade` temporarily resets the local database to the
 legacy schema, checks synthetic rows through the alignment migrations, and
-restores the canonical seed. Run it only when no local data beyond the
-repository seed needs to be retained.
+restores the regular synthetic seed, including map-demo data. Run it only when
+no local data beyond the repository seed needs to be retained.
 
 `npm run db:media-audit` lists local Storage objects without a matching Pet
 Profile or Spotting image path. It runs read-only and never removes objects.
 
 `db:configure` creates or updates the ignored `.env.local` file with local
-Supabase keys and `DATABASE_URL`. It rejects nonlocal values. Do not copy
+Supabase keys and `DATABASE_URL`; it does not reset or seed the database.
+`db:reset` is the command that replaces local database contents and runs the
+seeders. `db:configure` rejects nonlocal values. Do not copy
 `.env.example` to `.env.local`.
 
 The synthetic seed includes ordinary users and an admin account. Seed passwords

@@ -36,8 +36,6 @@ function parseBounds(params: URLSearchParams): MapBounds | null {
     maxLng === null ||
     minLat < -90 ||
     maxLat > 90 ||
-    minLng < -180 ||
-    maxLng > 180 ||
     minLat >= maxLat ||
     minLng >= maxLng
   ) {

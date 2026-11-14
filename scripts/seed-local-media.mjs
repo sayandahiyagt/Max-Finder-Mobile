@@ -1,6 +1,10 @@
 
+import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { DEMO_PHOTOS, getDemoCatalogPath } from "./map-demo-content.mjs";
 
 const isWindows = process.platform === "win32";
 
@@ -131,44 +135,96 @@ const supabase = createClient(apiUrl, serviceRoleKey, {
   },
 });
 
-const image = new Blob(
-  [
-    Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC",
-      "base64",
-    ),
-  ],
-  { type: "image/png" },
+async function listStoredFiles(bucketName, prefix) {
+  const bucket = supabase.storage.from(bucketName);
+  const entries = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await bucket.list(prefix, {
+      limit: 1000,
+      offset,
+    });
+    if (error) throw error;
+    entries.push(...(data ?? []));
+    if ((data?.length ?? 0) < 1000) break;
+  }
+
+  const nestedFiles = await Promise.all(
+    entries.map(async (entry) => {
+      const objectPath = `${prefix}/${entry.name}`;
+      return entry.id
+        ? [objectPath]
+        : listStoredFiles(bucketName, objectPath);
+    }),
+  );
+  return nestedFiles.flat();
+}
+
+async function clearGeneratedPetPhotos(prefix) {
+  const paths = await listStoredFiles("pet-images", prefix);
+  const bucket = supabase.storage.from("pet-images");
+  for (let offset = 0; offset < paths.length; offset += 100) {
+    const { error } = await bucket.remove(paths.slice(offset, offset + 100));
+    if (error) throw error;
+  }
+}
+
+// These reserved prefixes contain only synthetic demo profile photos.
+// Clearing them before a local reset keeps random-ID seeding from leaving old
+// objects behind after PostgreSQL replaces its rows.
+await clearGeneratedPetPhotos("demo-map/pets");
+await clearGeneratedPetPhotos("demo-clusters/pets");
+
+const assetDirectory = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "assets",
+  "demo-pet-photos",
 );
+const photoBlobs = new Map();
+
+for (const photo of DEMO_PHOTOS) {
+  const bytes = await readFile(path.join(assetDirectory, photo.fileName));
+  const blob = new Blob([new Uint8Array(bytes)], { type: "image/jpeg" });
+  photoBlobs.set(photo.id, blob);
+
+  for (const bucketName of ["pet-images", "spotting-images"]) {
+    const { error } = await supabase.storage
+      .from(bucketName)
+      .upload(getDemoCatalogPath(photo), blob, {
+        cacheControl: "3600",
+        contentType: "image/jpeg",
+        upsert: true,
+      });
+    if (error) {
+      throw new Error(`Could not upload local demo photo ${photo.id}.`);
+    }
+  }
+}
 
 const seedObjects = [
   {
     bucket: "pet-images",
-    path: "00000000-0000-4000-8000-000000000101/pets/mochi.png",
+    path: "00000000-0000-4000-8000-000000000101/pets/mochi.jpg",
+    image: photoBlobs.get("cat-tabby"),
   },
   {
     bucket: "spotting-images",
-    path: "dummy/spotting.png",
+    path: "dummy/spotting.jpg",
+    image: photoBlobs.get("dog-camera"),
   },
 ];
 
 for (const object of seedObjects) {
   const { error } = await supabase.storage
     .from(object.bucket)
-    .upload(object.path, image, {
+    .upload(object.path, object.image, {
       cacheControl: "3600",
-      contentType: "image/png",
+      contentType: "image/jpeg",
       upsert: true,
     });
 
-  if (error) {
-    process.stderr.write(
-      "Could not seed local synthetic image data.\n",
-    );
-    process.exit(1);
-  }
+  if (error) throw new Error("Could not seed canonical local pet photos.");
 }
 
 process.stdout.write(
-  "Seeded two synthetic images in local Supabase Storage.\n",
+  `Seeded ${DEMO_PHOTOS.length} real pet-photo variants in local Supabase Storage.\n`,
 );

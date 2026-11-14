@@ -300,14 +300,13 @@ for (const [kind, imageUrl] of [
   const bytes = new Uint8Array(await image.arrayBuffer());
   if (
     image.status !== 200 ||
-    !image.headers.get("content-type")?.startsWith("image/png") ||
-    bytes.length < 8 ||
-    bytes[0] !== 137 ||
-    bytes[1] !== 80 ||
-    bytes[2] !== 78 ||
-    bytes[3] !== 71
+    !image.headers.get("content-type")?.startsWith("image/jpeg") ||
+    bytes.length < 3 ||
+    bytes[0] !== 0xff ||
+    bytes[1] !== 0xd8 ||
+    bytes[2] !== 0xff
   ) {
-    process.stderr.write(`Seeded local ${kind} image did not load as PNG.\n`);
+    process.stderr.write(`Seeded local ${kind} image did not load as JPEG.\n`);
     process.exit(1);
   }
 }

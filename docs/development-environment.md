@@ -145,15 +145,76 @@ This workaround is documented in the [Podman Windows API pipe issue](https://git
 other files from the temporary directory.
 
 `db:reset` replaces the local database contents, applies the repository SQL
-migrations and synthetic `supabase/seed.sql` data, then upserts two PNGs to the
-local Pet Profile and Spotting buckets. The seed includes three original Pet
+migrations and synthetic `supabase/seed.sql` data, then uploads eight openly
+licensed pet-photo examples to local Storage. It uses them for public Spotting
+images and keeps private Pet Profile images for the original and neighborhood-cluster examples. The high-volume national grid intentionally omits private pet-image objects.
+The seed includes three original Pet
 Profiles and four additional demo pets, five nearby LOST reports, five nearby
-spottings, and FOUND and REMOVED reports. The nearby activity makes the map
-density overlay visible on the default view. The local smoke verifies the
-found report appears in the reunion API and removed reports stay off public
-detail and map results. The reset is safe to rerun.
-`db:configure` writes local
-loopback keys and `DATABASE_URL` to the ignored `.env.local` file. When that
+spottings, and FOUND and REMOVED reports. After the image setup, reset adds 1,200 synthetic LOST reports and 800
+synthetic spottings across U.S. cities and towns, 2,000 regional cluster
+points (500 of each activity type), a 600-point Duluth, Georgia cluster (300
+LOST reports and 300 spottings), and 12,000 nationwide coverage points by
+default (6,000 LOST reports and 6,000 spottings). Duluth points use public
+parks and landmarks rather than residential addresses. Generated map records
+use curated city-center or public-landmark coordinates directly; coordinates
+are not randomly jittered into oceans or lakes. Multiple records can share an
+anchor coordinate. Lost-pet records in this high-volume batch have no private profile
+image, while Spotting records reuse the local public demo-photo catalog. The
+local Supabase reset wrapper runs
+`node scripts/seed-map-cluster-demo-data.mjs --points 2000` as one of its seed
+steps. Reset output prints that command and reports the inserted report and
+Spotting counts when it completes.
+It places 70% of both report and Spotting points across 14 southern states,
+with the rest spread across nine western and twelve northeastern states. Every
+record remains an individual red or blue dot at every zoom level. The 2,000 records use unique coordinates around 250 curated city and landmark anchors across 222 cities, with red and blue counts balanced in every covered state.
+The base map seed
+keeps wider city and rural coverage elsewhere.
+
+To preview the exact 1,000/1,000 activity split, state coverage, and distinct
+coordinates without connecting to PostgreSQL, run
+`node scripts/seed-map-cluster-demo-data.mjs --points 2000 --dry-run --json`.
+The seeder reads `DATABASE_URL` from ignored `.env.local` and accepts only the
+local Supabase PostgreSQL endpoint.
+
+To add only the national coverage grid to an existing local database, run:
+
+~~~powershell
+npm run db:seed:map:density
+~~~
+
+The national seeder is additive and repeatable. Preview or change its size
+without touching the database:
+
+~~~powershell
+npm run db:seed:map:density -- --points 16000 --dry-run
+~~~
+
+To add the Duluth cluster to an already-running local database without
+resetting its existing data, run:
+
+~~~powershell
+npm run db:seed:map:duluth
+~~~
+
+It uploads the bundled demo-photo catalog to local Storage, adds synthetic
+activity near Duluth Town Green, Bunten Road Park, and McDaniel Farm Park, and
+prepares local pet photos. It does not delete existing demo media. Re-running
+the command does not duplicate these points. Preview the planned data with
+`node scripts/seed-map-duluth-demo-data.mjs --dry-run`.
+
+The map seeders use stable IDs to skip records already added and preserve
+canonical seed records. The regional cluster seeder replaces only its own
+marked demo batch when run directly; use `npm run db:seed:map:clusters` to
+refresh its default 2,000 points without resetting the database. The nationwide
+density seeder is additive: changing its point count can add another batch.
+The regional batch defaults to 2,000 points during reset. Set
+`MAXFINDER_DULUTH_DEMO_POINTS` to an even number from
+100 to 2,000 before `db:reset` to change the Duluth batch size. The local smoke
+verifies the found report appears in the reunion API and removed reports stay
+off public detail and map results. The reset is safe to rerun.
+`db:configure` only writes local
+loopback keys and `DATABASE_URL` to the ignored `.env.local` file; it does not
+reset or seed the database. When that
 file already exists, the script adds only a missing local database URL. It
 refuses to edit settings that point to another Supabase project. The
 `local-supabase.mjs` wrapper permits local stack start/stop/status, the normal
@@ -163,6 +224,12 @@ if Supabase CLI metadata names a hosted project. Status output shows loopback
 endpoints and does not print local keys. These guards protect the documented
 npm scripts; do not run raw Supabase CLI commands during this local-only
 refactor.
+
+The regular reset loads the map demo data, including the 2,000-point cluster
+seeder invocation shown above, so no extra seed command is needed after a
+reset. `db:configure` can safely run before or after reset and does not modify
+database contents. These changes add no schema migration. The dataset is
+synthetic and local; it is not pushed to hosted Supabase projects.
 
 ## Current environment variables
 

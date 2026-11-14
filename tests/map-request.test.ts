@@ -29,6 +29,23 @@ describe("parseMapRequest", () => {
     });
   });
 
+  it("accepts unwrapped world bounds reported by Leaflet", () => {
+    const params = new URLSearchParams(
+      "minLat=-85&maxLat=85&minLng=-1125&maxLng=1125",
+    );
+
+    expect(parseMapRequest(params)).toMatchObject({
+      ok: true,
+      value: {
+        bounds: {
+          minLat: -85,
+          maxLat: 85,
+          minLng: -1125,
+          maxLng: 1125,
+        },
+      },
+    });
+  });
   it.each([
     ["maxLat=", "Invalid map bounds."],
     ["minLat=20&maxLat=10", "Invalid map bounds."],

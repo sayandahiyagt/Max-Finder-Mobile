@@ -42,7 +42,6 @@ export function CommunityMapExplorer() {
   const searchController = useRef<AbortController | null>(null);
   const [filters, setFilters] = useState<MapUiFilters>(defaultMapUiFilters);
   const [radius, setRadius] = useState<MapRadiusMiles>(1);
-  const [heatmapEnabled, setHeatmapEnabled] = useState(true);
   useEffect(() => {
     return () => searchController.current?.abort();
   }, []);
@@ -200,7 +199,6 @@ export function CommunityMapExplorer() {
           searchLocation={searchLocation}
           radiusMiles={searchLocation ? radius : null}
           filters={filters}
-          heatmapEnabled={heatmapEnabled}
         />
         <div className={styles.mapLegend}>
           <span>
@@ -209,15 +207,6 @@ export function CommunityMapExplorer() {
           <span>
             <i className={styles.spottedDot} /> Spotting
           </span>
-          <label className={styles.heatmapToggle}>
-            <input
-              type="checkbox"
-              checked={heatmapEnabled}
-              onChange={(e) => setHeatmapEnabled(e.target.checked)}
-              aria-label="Toggle density overlay"
-            />
-            <span>Density overlay</span>
-          </label>
         </div>
       </div>
       <AdvancedMapFilters filters={filters} onChange={setFilters} />

@@ -95,7 +95,7 @@ on conflict (pet_id) do update set
 insert into public.pet_images (pet_id, storage_path)
 values (
   '00000000-0000-4000-8000-000000000201',
-  '00000000-0000-4000-8000-000000000101/pets/mochi.png'
+  '00000000-0000-4000-8000-000000000101/pets/mochi.jpg'
 )
 on conflict (pet_id) do update set storage_path = excluded.storage_path;
 
@@ -107,50 +107,50 @@ values
   (
     '00000000-0000-4000-8000-000000000301',
     '00000000-0000-4000-8000-000000000201', 'LOST',
-    '2026-10-20T18:30:00Z', 40.7128, -74.006,
-    'Example Park, Example City', 'email', 'owner@example.test',
+    '2026-10-20T18:30:00Z', 40.71222, -74.00722,
+    'City Hall Park, New York, NY', 'email', 'owner@example.test',
     'Under 10 lbs', 'Gray tabby with a white chest.'
   ),
   (
     '00000000-0000-4000-8000-000000000311',
     '00000000-0000-4000-8000-000000000202', 'FOUND',
-    '2026-10-21T18:30:00Z', 40.7134, -74.0048,
-    'Example Park, Example City', 'in_app', null,
+    '2026-10-21T18:30:00Z', 40.71222, -74.00722,
+    'City Hall Park, New York, NY', 'in_app', null,
     '10–25 lbs', 'Biscuit was safely found near the park.'
   ),
   (
     '00000000-0000-4000-8000-000000000312',
     '00000000-0000-4000-8000-000000000203', 'REMOVED',
-    '2026-10-19T18:30:00Z', 40.7119, -74.0071,
-    'Example Park, Example City', 'in_app', null,
+    '2026-10-19T18:30:00Z', 40.71222, -74.00722,
+    'City Hall Park, New York, NY', 'in_app', null,
     'Under 10 lbs', 'Synthetic report retained in the removed state.'
   ),
   (
     '00000000-0000-4000-8000-000000000313',
     '00000000-0000-4000-8000-000000000204', 'LOST',
-    '2026-11-01T14:15:00Z', 40.7140, -74.0045,
-    'Near City Hall Park', 'in_app', null,
+    '2026-11-01T14:15:00Z', 40.71222, -74.00722,
+    'City Hall Park, New York, NY', 'in_app', null,
     '10–25 lbs', 'Small tan dog wearing a blue collar.'
   ),
   (
     '00000000-0000-4000-8000-000000000314',
     '00000000-0000-4000-8000-000000000205', 'LOST',
-    '2026-11-02T09:30:00Z', 40.7112, -74.0080,
-    'Near the WTC Memorial', 'in_app', null,
+    '2026-11-02T09:30:00Z', 40.71154, -74.013042,
+    'National September 11 Memorial, New York, NY', 'in_app', null,
     'Under 10 lbs', 'Orange cat with a white chest.'
   ),
   (
     '00000000-0000-4000-8000-000000000315',
     '00000000-0000-4000-8000-000000000206', 'LOST',
-    '2026-11-03T17:45:00Z', 40.7154, -74.0105,
-    'Near Tribeca Park', 'in_app', null,
+    '2026-11-03T17:45:00Z', 40.72022, -74.0057,
+    'Tribeca Park, New York, NY', 'in_app', null,
     '51–75 lbs', 'Friendly black dog with a red harness.'
   ),
   (
     '00000000-0000-4000-8000-000000000316',
     '00000000-0000-4000-8000-000000000207', 'LOST',
-    '2026-11-04T12:00:00Z', 40.7106, -74.0025,
-    'Near South Street', 'in_app', null,
+    '2026-11-04T12:00:00Z', 40.706322, -74.00264,
+    'South Street Seaport, New York, NY', 'in_app', null,
     'Under 10 lbs', 'Gray and white cat with a green tag.'
   )
 on conflict (report_id) do update set
@@ -174,32 +174,32 @@ values
   (
   '00000000-0000-4000-8000-000000000302', 'Cat', 'Domestic Shorthair',
   'Under 10 lbs', 'Gray tabby near the park.', 'White chest',
-  '2026-10-21T19:00:00Z', 40.7132, -74.0056,
-  'Example Park, Example City', 'dummy/spotting.png'
+  '2026-10-21T19:00:00Z', 40.71222, -74.00722,
+  'City Hall Park, New York, NY', 'dummy/spotting.jpg'
   ),
   (
     '00000000-0000-4000-8000-000000000303', 'Dog', 'Beagle',
     '10–25 lbs', 'Tan dog near City Hall Park.', 'Blue collar',
-    '2026-11-01T15:00:00Z', 40.7145, -74.0052,
-    'City Hall Park', 'dummy/spotting.png'
+    '2026-11-01T15:00:00Z', 40.71222, -74.00722,
+    'City Hall Park, New York, NY', 'dummy/spotting.jpg'
   ),
   (
     '00000000-0000-4000-8000-000000000304', 'Cat', 'Domestic Shorthair',
     'Under 10 lbs', 'Orange cat near the memorial.', 'White chest',
-    '2026-11-02T10:00:00Z', 40.7121, -74.0038,
-    'WTC Memorial area', 'dummy/spotting.png'
+    '2026-11-02T10:00:00Z', 40.71154, -74.013042,
+    'National September 11 Memorial, New York, NY', 'dummy/spotting.jpg'
   ),
   (
     '00000000-0000-4000-8000-000000000305', 'Dog', 'Labrador Retriever',
     '51–75 lbs', 'Black dog near Tribeca Park.', 'Red harness',
-    '2026-11-03T18:00:00Z', 40.7160, -74.0082,
-    'Tribeca Park', 'dummy/spotting.png'
+    '2026-11-03T18:00:00Z', 40.72022, -74.0057,
+    'Tribeca Park, New York, NY', 'dummy/spotting.jpg'
   ),
   (
     '00000000-0000-4000-8000-000000000306', 'Cat', 'Domestic Shorthair',
     'Under 10 lbs', 'Gray and white cat near South Street.', 'Green tag',
-    '2026-11-04T12:30:00Z', 40.7108, -74.0061,
-    'South Street area', 'dummy/spotting.png'
+    '2026-11-04T12:30:00Z', 40.706322, -74.00264,
+    'South Street Seaport, New York, NY', 'dummy/spotting.jpg'
   )
 on conflict (id) do update set
   species = excluded.species,
@@ -231,7 +231,7 @@ values (
   '00000000-0000-4000-8000-000000000501',
   '00000000-0000-4000-8000-000000000401',
   '00000000-0000-4000-8000-000000000002',
-  'I saw a cat matching Mochi near Example Park.'
+  'I saw a cat matching Mochi near City Hall Park.'
 )
 on conflict (message_id) do update set
   content = excluded.content;

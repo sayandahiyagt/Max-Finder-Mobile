@@ -70,7 +70,6 @@ export type MapExplorerProps = {
   searchLocation?: [number, number] | null;
   radiusMiles?: MapRadiusMiles | null;
   filters?: MapUiFilters;
-  heatmapEnabled?: boolean;
 };
 
 export type MapSearchFilters = {
