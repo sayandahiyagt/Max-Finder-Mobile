@@ -1,28 +1,31 @@
-# MaxFinder Mobile
+# Max Finder Mobile
 
-MaxFinder is a lost-pet reporting and community spotting application built with
-Next.js, Supabase, and Leaflet/OpenStreetMap.
+Max Finder helps people report lost pets, share sightings, and find recovery information. The current client is a Next.js web app. The repository uses Supabase for Auth, Storage, and PostgreSQL. Prisma provides application data access; the Supabase CLI applies SQL migrations.
 
-## Three application stages
+## Development stages
 
-- **Local development:** run the app with local Supabase and synthetic data.
-- **Team review:** pull requests create Vercel Preview deployments. Configure
-  Preview environment variables to use the hosted development Supabase project.
-- **Production:** Vercel deploys `main` with the production Supabase project.
+| Stage | App uses | Intended use |
+| --- | --- | --- |
+| Local development | Local Supabase | Day-to-day coding and testing with disposable local data. |
+| Hosted development | Supabase development project | Vercel Preview deployments for reviewing pull requests. |
+| Production | Supabase production project | The live app for users. Changes deploy when a reviewed change is merged to `main`. |
 
-Vercel's Development environment is not part of this workflow. Do not run the
-app locally against hosted development. See the
-[environment and verification guide](docs/development-environment.md) for
-local setup and the
-[hosted development transition record](docs/hosted-development-transition.md)
-for shared-project status.
+The local app connects only to local Supabase. Do not point local development at either hosted database.
 
 The public map's zoom-scaled individual dots and synthetic demo dataset are
 documented in the [map dots and demo data guide](docs/map-clustering-readme.md).
 
 Install dependencies:
 
-```bash
+- Git, Node.js 24, npm, Docker, and the Supabase CLI (the project scripts can invoke it through `npm exec`).
+- Local database setup is supported on macOS with Colima. Install Colima if it is not already available. The repository does not currently provide a supported Windows local database workflow.
+- Access to the GitHub repository and Supabase CLI login is needed for hosted migrations.
+
+Use the Node version recorded in `.nvmrc`:
+
+```sh
+nvm install
+nvm use
 npm ci
 ```
 
@@ -35,20 +38,22 @@ Supabase scripts verify the platform-specific context before operating. See
 Windows context setup and Podman API troubleshooting steps. Prisma schema
 validation and client generation do not contact a database.
 
-Start the local stack, apply the repository migrations, and load synthetic
-records with:
+Start the isolated local Supabase stack. On macOS with Colima:
 
-```bash
+```sh
+colima start --profile maxfinder-local
+docker context use colima-maxfinder-local
 npm run db:start
+```
+
+Initialize or reset the local database and apply its migrations and synthetic seed data:
+
+```sh
 npm run db:reset
-npm run db:migrations
 npm run db:configure
+npm run db:migrations
 npm run db:prisma:validate
 npm run db:prisma:generate
-npm run test:db
-npm run db:media-audit
-npm run test:migration-upgrade
-npm run dev
 ```
 
 The reset command replaces only the local database contents, reapplies its
@@ -94,133 +99,129 @@ legacy schema, checks synthetic rows through the alignment migrations, and
 restores the regular synthetic seed, including map-demo data. Run it only when
 no local data beyond the repository seed needs to be retained.
 
-`npm run db:media-audit` lists local Storage objects without a matching Pet
-Profile or Spotting image path. It runs read-only and never removes objects.
+```sh
+npm run db:configure
+npm run dev
+```
 
-`db:configure` creates or updates the ignored `.env.local` file with local
-Supabase keys and `DATABASE_URL`; it does not reset or seed the database.
-`db:reset` is the command that replaces local database contents and runs the
-seeders. `db:configure` rejects nonlocal values. Do not copy
-`.env.example` to `.env.local`.
+`db:configure` creates or updates the ignored `.env.local` with loopback URLs and local keys. Do not copy `.env.example` over it. Check `docs/development-environment.md` if setup needs troubleshooting. Open <http://localhost:3000> to use the app. In a second terminal, the local auth smoke check can be run with:
 
-The synthetic seed includes ordinary users and an admin account. Seed passwords
-work only in the local Supabase Auth stack.
-
-With the app running, use a second terminal to check the seeded sign-in and
-session flow:
-
-```bash
+```sh
 npm run smoke:local-auth
 ```
 
-The tracked environment variable names are:
+Useful local database commands:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `DATABASE_URL`
-- `SUPABASE_DB_CA_CERT_BASE64` (Vercel Preview and Production only)
-
-Keep `SUPABASE_SERVICE_ROLE_KEY` and `DATABASE_URL` server-side. Never commit
-`.env.local` or secret values.
-
-Supabase CLI owns the SQL migration history. Prisma provides the typed
-application database client. Do not use Prisma Migrate for this repository.
-
-## Supabase database workflow
-
-The repository migrations are in [`supabase/migrations`](./supabase/migrations).
-Development and production use separate shared Supabase projects. Local app
-development always uses the local Supabase stack. Vercel Preview uses hosted
-development, and Vercel Production uses hosted production.
-
-### Apply migrations to shared Supabase development
-
-This workflow changes a hosted database. Use it only after local verification
-and explicit team approval.
-
-Link the CLI to the shared development project, then push the migrations:
-
-```powershell
-supabase link --project-ref vkdfgxvdbhmymjkrycif
-supabase db push --linked
-supabase migration list --linked
-```
-
-### Apply migrations to shared Supabase production
-
-Production migrations must be reviewed and tested against development first:
-
-```powershell
-supabase link --project-ref zbxnmkeolrcpadwzkuhp
-supabase db push --linked --dry-run
-supabase db push --linked
-supabase migration list --linked
-```
-
-The CLI is linked to one Supabase project at a time. Re-run `supabase link`
-before switching between the shared development and production projects.
-
-The one-off Pet Profile Storage migration is separate from app development. Run
-`npm run db:dev:media-configure` to prepare its ignored development-only key
-file, then `npm run db:dev:media`. The command only targets the hosted
-development project.
-
-## Vercel deployment workflow
-
-Link the repository to the existing Vercel project once:
-
-```powershell
-npx vercel link --yes --project max-finder-mobile
-```
-
-Configure these variables separately in Vercel Preview and Production. Preview
-uses the hosted development project; Production uses the production project.
-Use the matching project's transaction-pooler connection string for
-`DATABASE_URL`:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (store as a hidden secret)
-- `DATABASE_URL` (store as a hidden secret)
-- `SUPABASE_DB_CA_CERT_BASE64` (server-only TLS certificate setting)
-
-For each Vercel environment, get the PostgreSQL root CA certificate from that
-Supabase project's database settings and encode the PEM file as one base64
-value. Add it as `SUPABASE_DB_CA_CERT_BASE64` in the matching Vercel scope.
-This is certificate material, not an API key. Keep it server-only alongside
-the database URL. Local development does not need it. The app verifies the
-certificate when Prisma connects to hosted PostgreSQL. A successful Vercel
-build alone does not prove database-backed features can connect.
-
-Deploy a production build:
-
-```powershell
-npm run lint
-npm run typecheck
-npm test
-npm run build
-npx vercel deploy --prod --yes
-```
-
-Verify the deployment:
-
-```powershell
-npx vercel inspect https://max-finder-mobile.vercel.app --wait
-npx vercel curl https://max-finder-mobile.vercel.app
-```
-
-Never commit `.env.local`, `.vercel`, database credentials, or Supabase
-service-role keys.
-
-## Verification
-
-```powershell
-npm run lint
-npm run typecheck
-npm test
-npm run build
+```sh
+npm run db:start
+npm run db:reset
+npm run db:migrations
 npm run test:db
+npm run test:migration-upgrade
 npm run db:media-audit
+npm run db:stop
+```
+
+When finished, stop the stack. Colima can also be stopped if nothing else is using it:
+
+```sh
+npm run db:stop
+colima stop --profile maxfinder-local
+```
+
+## Hosted development and pull request previews
+
+Create a feature branch and open a pull request. Vercel automatically creates a Preview deployment for the pull request; Preview uses the hosted **development** Supabase project. Reviewers should use the Preview URL. Local development remains connected to local Supabase.
+
+Vercel Preview needs these project environment variables:
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Hosted development project's API URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Hosted development project's publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Hosted development project's service role key; keep secret |
+| `DATABASE_URL` | Hosted development PostgreSQL transaction-pooler URL |
+| `SUPABASE_DB_CA_CERT_BASE64` | Base64-encoded CA certificate matching that database connection |
+
+Set these in Vercel's **Preview** environment, not in tracked files or `.env.local`. Use the development project's values, never production values.
+
+### Apply migrations to hosted development
+
+Log in to the Supabase CLI if needed:
+
+```sh
+npm exec -- supabase login
+```
+
+List the remote migration state and preview pending changes:
+
+```sh
+npm run db:dev:migrations
+npm run db:dev:plan
+```
+
+Review the SQL changes and dry-run output. To apply the repository migrations to the hosted development project:
+
+```sh
+npm exec -- supabase db push --skip-vault --project-ref vkdfgxvdbhmymjkrycif
+npm run db:dev:migrations
+```
+
+The project reference is for the hosted development project. The command targets that project explicitly; it does not use the local database. `--skip-vault` avoids applying Supabase Vault changes through this workflow.
+
+If hosted development's Pet Profile images still need the legacy media transfer, the project provides:
+
+```sh
+npm run db:dev:media-configure
+npm run db:dev:media
+```
+
+These commands affect hosted development media. Review their output and use them only when that migration is needed.
+
+## Production
+
+Production uses its own Vercel Production environment variables and hosted production Supabase project. Configure the same five variable names listed above with **production** values. Keep the service role key secret and the CA certificate server-side. Do not use production credentials for local development or Preview.
+
+Production migrations are a release operation. Before applying them, coordinate with the team, confirm the production backup/recovery point, review every pending migration for data loss and compatibility with the currently deployed app, and run the dry-run. In particular, schema changes that drop legacy columns can break the currently deployed version if applied before compatible code is live.
+
+```sh
+npm exec -- supabase login
+npm exec -- supabase migration list --project-ref zbxnmkeolrcpadwzkuhp
+npm exec -- supabase db push --dry-run --skip-vault --project-ref zbxnmkeolrcpadwzkuhp
+```
+
+After reviewing the migration plan and release timing, apply and verify:
+
+```sh
+npm exec -- supabase db push --skip-vault --project-ref zbxnmkeolrcpadwzkuhp
+npm exec -- supabase migration list --project-ref zbxnmkeolrcpadwzkuhp
+```
+
+Merging an approved pull request to `main` triggers the Vercel Production deployment. Do not routinely run a manual `vercel deploy --prod`; use the repository's GitHub-to-Vercel deployment flow. After deployment, a basic read-only availability check is:
+
+```sh
+curl -fsS https://max-finder-mobile.vercel.app/api/stats
+```
+
+Never run `db:reset` or hosted-development media commands against production.
+
+## Checks before opening a pull request
+
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+For database changes, also validate Prisma and verify the migration against a fresh local database before requesting review:
+
+```sh
+npm run db:reset
+npm run db:prisma:validate
+npm run db:prisma:generate
+npm run test:db
 npm run test:migration-upgrade
 ```
+
+See [`docs/development-environment.md`](docs/development-environment.md), [`docs/hosted-development-transition.md`](docs/hosted-development-transition.md), and the other specifications under [`docs/`](docs/) for detailed setup and architecture decisions.
