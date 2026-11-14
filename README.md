@@ -12,7 +12,10 @@ Max Finder helps people report lost pets, share sightings, and find recovery inf
 
 The local app connects only to local Supabase. Do not point local development at either hosted database.
 
-## Prerequisites
+The public map's zoom-scaled individual dots and synthetic demo dataset are
+documented in the [map dots and demo data guide](docs/map-clustering-readme.md).
+
+Install dependencies:
 
 - Git, Node.js 24, npm, Docker, and the Supabase CLI (the project scripts can invoke it through `npm exec`).
 - Local database setup is supported on macOS with Colima. Install Colima if it is not already available. The repository does not currently provide a supported Windows local database workflow.
@@ -26,9 +29,14 @@ nvm use
 npm ci
 ```
 
-If you do not use `nvm`, install Node.js 24 yourself. Vercel currently selects Node.js 26 because `package.json` permits `>=22`; CI and local development use Node.js 24.
-
-## Local development
+Local Supabase development uses an isolated container engine: Colima on macOS
+or Podman Desktop on Windows. On macOS, start the `maxfinder-local` Colima
+profile and select `colima-maxfinder-local`. On Windows, start the Podman
+machine and select the `podman-maxfinder-local` Docker context. The local
+Supabase scripts verify the platform-specific context before operating. See
+[`docs/development-environment.md`](docs/development-environment.md) for the
+Windows context setup and Podman API troubleshooting steps. Prisma schema
+validation and client generation do not contact a database.
 
 Start the isolated local Supabase stack. On macOS with Colima:
 
@@ -48,9 +56,48 @@ npm run db:prisma:validate
 npm run db:prisma:generate
 ```
 
-`db:reset` deletes and recreates the **local** database. It may be run again to return to a clean sample dataset. It must not be used with hosted projects.
+The reset command replaces only the local database contents, reapplies its
+migrations, loads canonical synthetic records and local demo photos, then adds
+1,200 synthetic LOST reports, 800 spottings, 2,000 regional cluster points, a 600-point Duluth cluster, and 12,000 nationwide coverage points by
+default. The reset runs the cluster seeder as
+`node scripts/seed-map-cluster-demo-data.mjs --points 2000`. The national
+points form a jittered oval grid about 15 to 20 miles apart across the
+contiguous U.S.
 
-Configure the app with keys from the local Supabase stack, then start it:
+To add the national grid to an existing local database without resetting it,
+run:
+
+~~~powershell
+npm run db:seed:map:density
+~~~
+
+Preview a different size before inserting:
+
+~~~powershell
+npm run db:seed:map:density -- --points 16000 --dry-run
+~~~
+
+The density command is additive and repeatable. Seed accounts use the
+password local-only-test-password and .test email addresses. Stop the local
+stack with npm run db:stop.
+
+To refresh only the 2,000-point regional cluster batch in an already-running
+local database, run:
+
+```powershell
+npm run db:seed:map:clusters
+```
+
+This command runs the cluster seeder and prepares its private pet photos.
+The database integration, media audit, migration-upgrade, and local-auth smoke
+scripts currently require macOS with the Colima context. Windows with Podman
+supports the local app stack, reset, configuration, status, and migration
+commands.
+
+`npm run test:migration-upgrade` temporarily resets the local database to the
+legacy schema, checks synthetic rows through the alignment migrations, and
+restores the regular synthetic seed, including map-demo data. Run it only when
+no local data beyond the repository seed needs to be retained.
 
 ```sh
 npm run db:configure

@@ -9,7 +9,19 @@ import { MapReportMarker } from "@/components/map-report-marker";
 import type { MapReport } from "@/features/search/types";
 
 jest.mock("react-leaflet", () => ({
-  CircleMarker: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  CircleMarker: ({
+    children,
+    radius,
+    fillColor,
+  }: {
+    children: ReactNode;
+    radius: number;
+    fillColor: string;
+  }) => (
+    <div data-radius={radius} data-fill-color={fillColor}>
+      {children}
+    </div>
+  ),
   Popup: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 jest.mock("next/image", () => ({
@@ -64,7 +76,7 @@ describe("MapReportMarker", () => {
     "renders the $type detail link",
     ({ type, id, href, label }) => {
       const html = renderToStaticMarkup(
-        createElement(MapReportMarker, { report: mapReport(type, id) }),
+        createElement(MapReportMarker, { report: mapReport(type, id), zoom: 14 }),
       );
 
       expect(html).toContain(`href="${href}"`);
@@ -76,4 +88,40 @@ describe("MapReportMarker", () => {
       expect(html).toContain("dummy.png");
     },
   );
+
+  it("keeps dots small at country zoom and scales them up nearby", () => {
+    const countryView = renderToStaticMarkup(
+      createElement(MapReportMarker, {
+        report: mapReport("spotted", "spotting-zoom"),
+        zoom: 4,
+      }),
+    );
+    const neighborhoodView = renderToStaticMarkup(
+      createElement(MapReportMarker, {
+        report: mapReport("spotted", "spotting-zoom"),
+        zoom: 14,
+      }),
+    );
+
+    expect(countryView).toContain('data-radius="1.5"');
+    expect(neighborhoodView).toContain('data-radius="5"');
+  });
+
+  it("uses red for lost reports and blue for Spottings", () => {
+    const lostReport = renderToStaticMarkup(
+      createElement(MapReportMarker, {
+        report: mapReport("lost", "lost-color"),
+        zoom: 8,
+      }),
+    );
+    const spotting = renderToStaticMarkup(
+      createElement(MapReportMarker, {
+        report: mapReport("spotted", "spotting-color"),
+        zoom: 8,
+      }),
+    );
+
+    expect(lostReport).toContain('data-fill-color="#ef4444"');
+    expect(spotting).toContain('data-fill-color="#4f94d0"');
+  });
 });
