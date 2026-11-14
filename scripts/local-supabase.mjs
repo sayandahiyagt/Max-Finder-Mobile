@@ -158,6 +158,17 @@ if (args[0] === "status") {
   process.exit(0);
 }
 
+const isStandardDatabaseReset =
+  args.length === 4 &&
+  args[0] === "db" &&
+  args[1] === "reset" &&
+  args[2] === "--local" &&
+  args[3] === "--yes";
+if (isStandardDatabaseReset) {
+  process.stdout.write(
+    "Starting standard local reset; the 2,000-point cluster seed runs after seed.sql.\n",
+  );
+}
 const command = runSupabase(args, { stdio: "inherit" });
 
 if (command.error) {
@@ -165,19 +176,66 @@ if (command.error) {
   process.exit(1);
 }
 
-if (command.status === 0 && args.join(" ") === "db reset --local --yes") {
-  const seed = spawnSync(
+if (isStandardDatabaseReset && command.status === 0) {
+  // Supabase has completed migrations and seed.sql. Add the wide regional
+  // cluster batch directly before running the remaining local demo setup.
+  process.stdout.write(
+    "Running node scripts/seed-map-cluster-demo-data.mjs --points 2000\n",
+  );
+  const clusterSeed = spawnSync(
     process.execPath,
-    [fileURLToPath(new URL("./seed-local-media.mjs", import.meta.url))],
+    [
+      fileURLToPath(new URL("./seed-map-cluster-demo-data.mjs", import.meta.url)),
+      "--points",
+      "2000",
+    ],
     { stdio: "inherit" },
   );
-
-  if (seed.error) {
-    process.stderr.write("Could not start local synthetic media seeding.\n");
+  if (clusterSeed.error) {
+    process.stderr.write(
+      `Could not start the regional cluster seed: ${clusterSeed.error.message}\n`,
+    );
     process.exit(1);
   }
+  if (clusterSeed.status !== 0) {
+    process.stderr.write(
+      `Regional cluster seed failed with exit code ${clusterSeed.status ?? "unknown"}.\n`,
+    );
+    process.exit(clusterSeed.status ?? 1);
+  }
 
-  process.exit(seed.status ?? 1);
+  // Seed photos and remaining map coverage after the cluster rows exist.
+  const resetSeedFiles = [
+    "seed-local-media.mjs",
+    "seed-map-demo-data.mjs" //,
+    //"seed-map-national-coverage.mjs",
+    //"seed-map-duluth-demo-data.mjs",
+    //"seed-map-demo-pet-images.mjs",
+  ];
+  // Run each local-only seed in order and stop if either one fails.
+  for (const seedFile of resetSeedFiles) {
+    const seedArgs = [fileURLToPath(new URL(`./${seedFile}`, import.meta.url))];
+    // Resolve the helper next to this wrapper and inherit its progress output.
+    const seed = spawnSync(process.execPath, seedArgs, { stdio: "inherit" });
+
+    // Report a launch error with the helper's filename for easier troubleshooting.
+    if (seed.error) {
+      process.stderr.write(`Could not start local seed ${seedFile}.\n`);
+      process.exit(1);
+    }
+
+    // Preserve the helper's failure code so a partial reset is never reported as successful.
+    if (seed.status !== 0) process.exit(seed.status ?? 1);
+  }
+
+  // Both media and map rows are now ready for local development.
+  process.exit(0);
+}
+
+if (isStandardDatabaseReset) {
+  process.stderr.write(
+    `Local Supabase reset did not complete successfully (exit code ${command.status ?? "unknown"}).\n`,
+  );
 }
 
 process.exit(command.status ?? 1);

@@ -21,7 +21,18 @@ jest.mock("react-leaflet", () => {
     Popup: container,
     Rectangle: container,
     TileLayer: container,
-    useMap: () => ({ invalidateSize: jest.fn(), setView: jest.fn() }),
+    useMap: () => ({
+      invalidateSize: jest.fn(),
+      setView: jest.fn(),
+      getBounds: () => ({
+        getWest: () => -180,
+        getSouth: () => -90,
+        getEast: () => 180,
+        getNorth: () => 90,
+      }),
+      getZoom: () => 14,
+      project: () => ({ x: 0, y: 0 }),
+    }),
     useMapEvents: jest.fn(),
   };
 });
@@ -74,6 +85,30 @@ describe("MapExplorer", () => {
     );
     expect(onCountsChange).toHaveBeenCalledTimes(1);
     expect(onCountsChange).toHaveBeenCalledWith({ reports: 0, spottings: 0 });
+  });
+
+  it("loads activity across the United States on the initial map view", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ reports: [], spottings: [] }),
+    });
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      value: fetchMock,
+    });
+
+    await act(async () => {
+      root.render(createElement(MapExplorer));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const [url] = fetchMock.mock.calls[0] ?? [];
+    const params = new URL(String(url), "http://localhost").searchParams;
+    expect(params.get("minLat")).toBe("23");
+    expect(params.get("maxLat")).toBe("50");
+    expect(params.get("minLng")).toBe("-126");
+    expect(params.get("maxLng")).toBe("-65");
   });
 
   it("sends selected filters and radius, then renders the Spotting detail link", async () => {

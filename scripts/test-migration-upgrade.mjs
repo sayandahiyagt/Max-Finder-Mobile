@@ -88,7 +88,7 @@ try {
     try {
       supabase(["db", "reset", "--local", "--yes"]);
       process.stdout.write(
-        "Restored the local database to the canonical synthetic seed.\n",
+        "Restored the local database with its synthetic map and cluster demo data.\n",
       );
     } catch (error) {
       failure ??= error;

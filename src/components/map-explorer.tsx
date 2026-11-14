@@ -11,8 +11,9 @@ import {
 import L from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
-import { MapReportMarker } from "@/components/map-report-marker";
-import { MapDensityClusters } from "@/components/map-density-clusters";
+// Every activity record remains an individual marker at every zoom level.
+import { MapPointLayer } from "@/components/map-point-layer";
+import { getSingleRequestLongitudeBounds } from "@/features/search/map-bounds";
 import { parseMapActivity } from "@/features/search/map-contract";
 import { getCurrentDeviceLocation } from "@/lib/geolocation";
 import {
@@ -91,9 +92,19 @@ function BoundsWatcher({ onChange }: { onChange: (bounds: string) => void }) {
   useMapEvents({
     moveend(event) {
       const bounds = event.target.getBounds();
+      const longitudeBounds = getSingleRequestLongitudeBounds({
+        minLng: bounds.getWest(),
+        maxLng: bounds.getEast(),
+      });
       onChange(
-        `minLat=${bounds.getSouth()}&maxLat=${bounds.getNorth()}&minLng=${bounds.getWest()}&maxLng=${bounds.getEast()}`,
+        new URLSearchParams({
+          minLat: String(Math.max(-90, bounds.getSouth())),
+          maxLat: String(Math.min(90, bounds.getNorth())),
+          minLng: String(longitudeBounds.minLng),
+          maxLng: String(longitudeBounds.maxLng),
+        }).toString(),
       );
+
     },
   });
   return null;
@@ -107,12 +118,11 @@ export default function MapExplorer({
   searchLocation = null,
   radiusMiles = null,
   filters = defaultMapUiFilters,
-  heatmapEnabled = true,
 }: MapExplorerProps) {
   const searchLatitude = searchLocation?.[0];
   const searchLongitude = searchLocation?.[1];
   const [bounds, setBounds] = useState(
-    "minLat=40.68&maxLat=40.76&minLng=-74.06&maxLng=-73.96",
+    "minLat=23&maxLat=50&minLng=-126&maxLng=-65",
   );
   const [reports, setReports] = useState<MapReport[]>([]);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -152,7 +162,6 @@ export default function MapExplorer({
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError")
           return;
-        setReports([]);
         setMapError("Map activity could not be loaded. Try again shortly.");
       });
     return () => controller.abort();
@@ -186,10 +195,12 @@ export default function MapExplorer({
 
   return (
     <MapContainer
-      center={[40.718, -74.009]}
-      zoom={14}
+      center={[37.5, -96]}
+      zoom={4}
       scrollWheelZoom
       zoomControl
+      // Canvas keeps many individual activity dots responsive at country scale.
+      preferCanvas
       className="maxfinder-map dark-map"
       aria-label="Map showing nearby lost pets and community spottings"
     >
@@ -224,15 +235,8 @@ export default function MapExplorer({
           {mapError}
         </div>
       )}
-      {reports.map((report) => (
-        <MapReportMarker key={report.id} report={report} />
-      ))}
-      <MapDensityClusters
-        reports={reports}
-        enabled={heatmapEnabled}
-        minClusterSize={5}
-        clusterRadiusMiles={7.5}
-      />
+      {/* Every activity remains its own dot, even when many dots overlap. */}
+      <MapPointLayer reports={reports} />
     </MapContainer>
   );
 }

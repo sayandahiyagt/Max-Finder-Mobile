@@ -3,6 +3,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { getPrismaClient } from "@/lib/db/client";
 import { distanceInMiles } from "@/lib/coordinates";
+import { getVisibleLongitudeRanges } from "./map-bounds";
 import type {
   MapActivity,
   MapBounds,
@@ -69,9 +70,12 @@ function searchCoordinates(
 }
 
 function coordinatesWhere(bounds: MapBounds) {
+  const longitudeRanges = getVisibleLongitudeRanges(bounds);
   return {
     latitude: { gte: bounds.minLat, lte: bounds.maxLat },
-    longitude: { gte: bounds.minLng, lte: bounds.maxLng },
+    OR: longitudeRanges.map((range) => ({
+      longitude: { gte: range.minLng, lte: range.maxLng },
+    })),
   };
 }
 
